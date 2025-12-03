@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/portfolio_item.dart';
 import '../models/company_info.dart';
@@ -9,20 +10,66 @@ class DataService {
   static const String investmentNoticeBoxName = 'investment_notices';
 
   static Future<void> initialize() async {
-    await Hive.initFlutter();
-    
-    // Register adapters
-    Hive.registerAdapter(PortfolioItemAdapter());
-    Hive.registerAdapter(CompanyInfoAdapter());
-    Hive.registerAdapter(InvestmentNoticeAdapter());
+    try {
+      await Hive.initFlutter();
+      
+      // Register adapters
+      Hive.registerAdapter(PortfolioItemAdapter());
+      Hive.registerAdapter(CompanyInfoAdapter());
+      Hive.registerAdapter(InvestmentNoticeAdapter());
 
-    // Open boxes
-    await Hive.openBox<PortfolioItem>(portfolioBoxName);
-    await Hive.openBox<CompanyInfo>(companyBoxName);
-    await Hive.openBox<InvestmentNotice>(investmentNoticeBoxName);
+      // Open boxes with error recovery
+      await _openBoxWithRetry<PortfolioItem>(portfolioBoxName);
+      await _openBoxWithRetry<CompanyInfo>(companyBoxName);
+      await _openBoxWithRetry<InvestmentNotice>(investmentNoticeBoxName);
 
-    // Initialize default data if empty
-    await _initializeDefaultData();
+      // Initialize default data if empty
+      await _initializeDefaultData();
+    } catch (e) {
+      // If initialization fails, try to recover by deleting corrupted boxes
+      debugPrint('⚠️ Hive initialization error: $e');
+      debugPrint('🔄 Attempting to recover by clearing corrupted data...');
+      await _recoverFromError();
+    }
+  }
+
+  static Future<void> _openBoxWithRetry<T>(String boxName) async {
+    try {
+      await Hive.openBox<T>(boxName);
+    } catch (e) {
+      debugPrint('❌ Failed to open box "$boxName": $e');
+      debugPrint('🔄 Deleting corrupted box and retrying...');
+      try {
+        await Hive.deleteBoxFromDisk(boxName);
+        await Hive.openBox<T>(boxName);
+        debugPrint('✅ Successfully recovered box "$boxName"');
+      } catch (retryError) {
+        debugPrint('❌ Recovery failed for "$boxName": $retryError');
+        rethrow;
+      }
+    }
+  }
+
+  static Future<void> _recoverFromError() async {
+    try {
+      // Delete all boxes and reinitialize
+      await Hive.deleteBoxFromDisk(portfolioBoxName);
+      await Hive.deleteBoxFromDisk(companyBoxName);
+      await Hive.deleteBoxFromDisk(investmentNoticeBoxName);
+      
+      // Reopen boxes
+      await Hive.openBox<PortfolioItem>(portfolioBoxName);
+      await Hive.openBox<CompanyInfo>(companyBoxName);
+      await Hive.openBox<InvestmentNotice>(investmentNoticeBoxName);
+      
+      // Reinitialize default data
+      await _initializeDefaultData();
+      
+      debugPrint('✅ Successfully recovered from error');
+    } catch (e) {
+      debugPrint('❌ Recovery failed completely: $e');
+      rethrow;
+    }
   }
 
   static Future<void> _initializeDefaultData() async {
