@@ -106,11 +106,11 @@ class PortfolioDetailScreen extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
-                              color: Colors.red.shade600,
+                              color: Colors.black,
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.red.shade300,
+                                  color: Colors.grey.shade400,
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
@@ -138,11 +138,11 @@ class PortfolioDetailScreen extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
-                              color: Colors.yellow.shade700,
+                              color: Colors.black,
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.yellow.shade300,
+                                  color: Colors.grey.shade400,
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
@@ -265,7 +265,7 @@ class PortfolioDetailScreen extends StatelessWidget {
                 ),
               ),
 
-            // YouTube Links
+            // YouTube Links with Thumbnails
             if (portfolio.youtubeLinks.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.all(24),
@@ -281,13 +281,90 @@ class PortfolioDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     ...portfolio.youtubeLinks.map((link) {
+                      final videoId = _extractYoutubeVideoId(link);
+                      final thumbnailUrl = videoId != null
+                          ? 'https://img.youtube.com/vi/$videoId/maxresdefault.jpg'
+                          : null;
+                      
                       return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          leading: const Icon(Icons.play_circle_outline, size: 40),
-                          title: Text(link),
-                          trailing: const Icon(Icons.open_in_new),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        clipBehavior: Clip.antiAlias,
+                        child: InkWell(
                           onTap: () => _launchUrl(link),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // YouTube Thumbnail
+                              if (thumbnailUrl != null)
+                                Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    AspectRatio(
+                                      aspectRatio: 16 / 9,
+                                      child: CachedNetworkImage(
+                                        imageUrl: thumbnailUrl,
+                                        fit: BoxFit.cover,
+                                        placeholder: (context, url) => Container(
+                                          color: Colors.grey.shade200,
+                                          child: const Center(
+                                            child: CircularProgressIndicator(),
+                                          ),
+                                        ),
+                                        errorWidget: (context, url, error) => Container(
+                                          color: Colors.grey.shade300,
+                                          child: const Center(
+                                            child: Icon(Icons.video_library, size: 64, color: Colors.grey),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    // Play button overlay
+                                    Container(
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(0.3),
+                                            blurRadius: 8,
+                                            spreadRadius: 2,
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Icon(
+                                        Icons.play_arrow,
+                                        color: Colors.white,
+                                        size: 48,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              // YouTube Link
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.video_library, color: Colors.red, size: 24),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        link,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.blue,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const Icon(Icons.open_in_new, size: 20, color: Colors.grey),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     }),
@@ -409,5 +486,26 @@ class PortfolioDetailScreen extends StatelessWidget {
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     }
+  }
+
+  String? _extractYoutubeVideoId(String url) {
+    // Support various YouTube URL formats
+    // https://www.youtube.com/watch?v=VIDEO_ID
+    // https://youtu.be/VIDEO_ID
+    // https://www.youtube.com/embed/VIDEO_ID
+    
+    final patterns = [
+      RegExp(r'(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\?\/\s]+)'),
+      RegExp(r'youtube\.com\/watch\?.*v=([^&\?\/\s]+)'),
+    ];
+    
+    for (final pattern in patterns) {
+      final match = pattern.firstMatch(url);
+      if (match != null && match.groupCount >= 1) {
+        return match.group(1);
+      }
+    }
+    
+    return null;
   }
 }
