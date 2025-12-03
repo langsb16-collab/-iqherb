@@ -11,8 +11,12 @@ import 'providers/portfolio_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Hive database
-  await DataService.initialize();
+  // Initialize database (platform-aware)
+  try {
+    await DataService.initialize();
+  } catch (e) {
+    debugPrint('⚠️ Database initialization failed, continuing with fallback: $e');
+  }
   
   runApp(const MyApp());
 }

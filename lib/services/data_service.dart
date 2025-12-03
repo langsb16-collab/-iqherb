@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/portfolio_item.dart';
 import '../models/company_info.dart';
 import '../models/investment_notice.dart';
@@ -8,8 +10,100 @@ class DataService {
   static const String portfolioBoxName = 'portfolios';
   static const String companyBoxName = 'company';
   static const String investmentNoticeBoxName = 'investment_notices';
+  
+  // Web platform uses shared_preferences
+  static SharedPreferences? _prefs;
+  static bool _isWebPlatform = kIsWeb;
 
   static Future<void> initialize() async {
+    if (_isWebPlatform) {
+      // Web platform: Use shared_preferences (stable, no IndexedDB issues)
+      await _initializeWebStorage();
+    } else {
+      // Mobile platform: Use Hive (high performance)
+      await _initializeHive();
+    }
+  }
+
+  // ==================== WEB STORAGE (shared_preferences) ====================
+  static Future<void> _initializeWebStorage() async {
+    try {
+      _prefs = await SharedPreferences.getInstance();
+      debugPrint('✅ Web storage (shared_preferences) initialized successfully');
+      
+      // Initialize default data if empty
+      await _initializeWebDefaultData();
+    } catch (e) {
+      debugPrint('❌ Web storage initialization failed: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> _initializeWebDefaultData() async {
+    final portfolios = _getWebPortfolios();
+    if (portfolios.isEmpty) {
+      await _addWebDefaultPortfolios();
+    }
+    
+    final company = _getWebCompanyInfo();
+    if (company == null) {
+      await _addWebDefaultCompanyInfo();
+    }
+  }
+
+  static List<PortfolioItem> _getWebPortfolios() {
+    if (_prefs == null) return [];
+    final String? data = _prefs!.getString('portfolios');
+    if (data == null) return [];
+    
+    try {
+      final List<dynamic> jsonList = json.decode(data);
+      return jsonList.map((json) => PortfolioItem.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint('❌ Failed to decode portfolios: $e');
+      return [];
+    }
+  }
+
+  static Future<void> _saveWebPortfolios(List<PortfolioItem> portfolios) async {
+    if (_prefs == null) return;
+    final jsonList = portfolios.map((p) => p.toJson()).toList();
+    await _prefs!.setString('portfolios', json.encode(jsonList));
+  }
+
+  static CompanyInfo? _getWebCompanyInfo() {
+    if (_prefs == null) return null;
+    final String? data = _prefs!.getString('company');
+    if (data == null) return null;
+    
+    try {
+      final Map<String, dynamic> jsonData = json.decode(data);
+      return CompanyInfo.fromJson(jsonData);
+    } catch (e) {
+      debugPrint('❌ Failed to decode company info: $e');
+      return null;
+    }
+  }
+
+  static Future<void> _saveWebCompanyInfo(CompanyInfo info) async {
+    if (_prefs == null) return;
+    await _prefs!.setString('company', json.encode(info.toJson()));
+  }
+
+  static Future<void> _addWebDefaultPortfolios() async {
+    final portfolios = _createDefaultPortfolios();
+    await _saveWebPortfolios(portfolios);
+    debugPrint('✅ Added ${portfolios.length} default portfolios to web storage');
+  }
+
+  static Future<void> _addWebDefaultCompanyInfo() async {
+    final company = _createDefaultCompanyInfo();
+    await _saveWebCompanyInfo(company);
+    debugPrint('✅ Added default company info to web storage');
+  }
+
+  // ==================== HIVE STORAGE (Mobile) ====================
+  static Future<void> _initializeHive() async {
     int retryCount = 0;
     const maxRetries = 3;
     
@@ -34,7 +128,7 @@ class DataService {
         await _openBoxWithRetry<InvestmentNotice>(investmentNoticeBoxName);
 
         // Initialize default data if empty
-        await _initializeDefaultData();
+        await _initializeHiveDefaultData();
         
         debugPrint('✅ Hive database initialized successfully');
         return; // Success!
@@ -55,7 +149,6 @@ class DataService {
           }
         } else {
           debugPrint('❌ Failed to initialize Hive after $maxRetries attempts');
-          debugPrint('⚠️ App will continue with limited functionality');
           rethrow;
         }
       }
@@ -92,7 +185,7 @@ class DataService {
       await Hive.openBox<InvestmentNotice>(investmentNoticeBoxName);
       
       // Reinitialize default data
-      await _initializeDefaultData();
+      await _initializeHiveDefaultData();
       
       debugPrint('✅ Successfully recovered from error');
     } catch (e) {
@@ -101,25 +194,41 @@ class DataService {
     }
   }
 
-  static Future<void> _initializeDefaultData() async {
+  static Future<void> _initializeHiveDefaultData() async {
     final portfolioBox = Hive.box<PortfolioItem>(portfolioBoxName);
     final companyBox = Hive.box<CompanyInfo>(companyBoxName);
 
     // Initialize portfolio items if empty
     if (portfolioBox.isEmpty) {
-      await _addDefaultPortfolios();
+      await _addHiveDefaultPortfolios();
     }
 
     // Initialize company info if empty
     if (companyBox.isEmpty) {
-      await _addDefaultCompanyInfo();
+      await _addHiveDefaultCompanyInfo();
     }
   }
 
-  static Future<void> _addDefaultPortfolios() async {
+  static Future<void> _addHiveDefaultPortfolios() async {
     final portfolioBox = Hive.box<PortfolioItem>(portfolioBoxName);
+    final portfolios = _createDefaultPortfolios();
 
-    final portfolios = [
+    for (var portfolio in portfolios) {
+      await portfolioBox.add(portfolio);
+    }
+    debugPrint('✅ Added ${portfolios.length} default portfolios to Hive');
+  }
+
+  static Future<void> _addHiveDefaultCompanyInfo() async {
+    final companyBox = Hive.box<CompanyInfo>(companyBoxName);
+    final companyInfo = _createDefaultCompanyInfo();
+    await companyBox.add(companyInfo);
+    debugPrint('✅ Added default company info to Hive');
+  }
+
+  // ==================== SHARED DEFAULT DATA CREATION ====================
+  static List<PortfolioItem> _createDefaultPortfolios() {
+    return [
       PortfolioItem(
         id: 'cashiq',
         title: 'cashiq.org',
@@ -389,16 +498,10 @@ class DataService {
         amount: null,
       ),
     ];
-
-    for (var portfolio in portfolios) {
-      await portfolioBox.add(portfolio);
-    }
   }
 
-  static Future<void> _addDefaultCompanyInfo() async {
-    final companyBox = Hive.box<CompanyInfo>(companyBoxName);
-
-    final companyInfo = CompanyInfo(
+  static CompanyInfo _createDefaultCompanyInfo() {
+    return CompanyInfo(
       id: 'company_001',
       companyName: '개발팀',
       description: '다양한 플랫폼 개발 전문팀',
@@ -417,80 +520,138 @@ class DataService {
       youtubeLink: 'https://youtu.be/GSGFA8SuCBk',
       contactTelegram: 'HERB4989',
     );
-
-    await companyBox.add(companyInfo);
   }
 
-  // Portfolio CRUD operations
+  // ==================== UNIFIED API (Auto-detects platform) ====================
   static List<PortfolioItem> getAllPortfolios() {
-    final box = Hive.box<PortfolioItem>(portfolioBoxName);
-    final items = box.values.toList();
-    items.sort((a, b) => a.order.compareTo(b.order));
-    return items;
+    if (_isWebPlatform) {
+      final portfolios = _getWebPortfolios();
+      portfolios.sort((a, b) => a.order.compareTo(b.order));
+      return portfolios;
+    } else {
+      final box = Hive.box<PortfolioItem>(portfolioBoxName);
+      final items = box.values.toList();
+      items.sort((a, b) => a.order.compareTo(b.order));
+      return items;
+    }
   }
 
   static PortfolioItem? getPortfolioById(String id) {
-    final box = Hive.box<PortfolioItem>(portfolioBoxName);
-    return box.values.firstWhere(
-      (item) => item.id == id,
-      orElse: () => box.values.first,
-    );
+    if (_isWebPlatform) {
+      final portfolios = _getWebPortfolios();
+      try {
+        return portfolios.firstWhere((item) => item.id == id);
+      } catch (e) {
+        return portfolios.isNotEmpty ? portfolios.first : null;
+      }
+    } else {
+      final box = Hive.box<PortfolioItem>(portfolioBoxName);
+      return box.values.firstWhere(
+        (item) => item.id == id,
+        orElse: () => box.values.first,
+      );
+    }
   }
 
   static Future<void> addPortfolio(PortfolioItem item) async {
-    final box = Hive.box<PortfolioItem>(portfolioBoxName);
-    await box.add(item);
+    if (_isWebPlatform) {
+      final portfolios = _getWebPortfolios();
+      portfolios.add(item);
+      await _saveWebPortfolios(portfolios);
+    } else {
+      final box = Hive.box<PortfolioItem>(portfolioBoxName);
+      await box.add(item);
+    }
   }
 
   static Future<void> updatePortfolio(int index, PortfolioItem item) async {
-    final box = Hive.box<PortfolioItem>(portfolioBoxName);
-    await box.putAt(index, item);
+    if (_isWebPlatform) {
+      final portfolios = _getWebPortfolios();
+      if (index >= 0 && index < portfolios.length) {
+        portfolios[index] = item;
+        await _saveWebPortfolios(portfolios);
+      }
+    } else {
+      final box = Hive.box<PortfolioItem>(portfolioBoxName);
+      await box.putAt(index, item);
+    }
   }
 
   static Future<void> deletePortfolio(int index) async {
-    final box = Hive.box<PortfolioItem>(portfolioBoxName);
-    await box.deleteAt(index);
+    if (_isWebPlatform) {
+      final portfolios = _getWebPortfolios();
+      if (index >= 0 && index < portfolios.length) {
+        portfolios.removeAt(index);
+        await _saveWebPortfolios(portfolios);
+      }
+    } else {
+      final box = Hive.box<PortfolioItem>(portfolioBoxName);
+      await box.deleteAt(index);
+    }
   }
 
   // Company Info operations
   static CompanyInfo? getCompanyInfo() {
-    final box = Hive.box<CompanyInfo>(companyBoxName);
-    return box.values.isNotEmpty ? box.values.first : null;
-  }
-
-  static Future<void> updateCompanyInfo(CompanyInfo info) async {
-    final box = Hive.box<CompanyInfo>(companyBoxName);
-    if (box.isNotEmpty) {
-      await box.putAt(0, info);
+    if (_isWebPlatform) {
+      return _getWebCompanyInfo();
     } else {
-      await box.add(info);
+      final box = Hive.box<CompanyInfo>(companyBoxName);
+      return box.values.isNotEmpty ? box.values.first : null;
     }
   }
 
-  // Investment Notice operations
+  static Future<void> updateCompanyInfo(CompanyInfo info) async {
+    if (_isWebPlatform) {
+      await _saveWebCompanyInfo(info);
+    } else {
+      final box = Hive.box<CompanyInfo>(companyBoxName);
+      if (box.isNotEmpty) {
+        await box.putAt(0, info);
+      } else {
+        await box.add(info);
+      }
+    }
+  }
+
+  // Investment Notice operations (currently Hive-only for mobile)
   static InvestmentNotice? getInvestmentNotice() {
-    final box = Hive.box<InvestmentNotice>(investmentNoticeBoxName);
-    final activeNotices = box.values.where((notice) => notice.isActive).toList();
-    return activeNotices.isNotEmpty ? activeNotices.first : null;
+    if (_isWebPlatform) {
+      // Not implemented for web yet
+      return null;
+    } else {
+      final box = Hive.box<InvestmentNotice>(investmentNoticeBoxName);
+      final activeNotices = box.values.where((notice) => notice.isActive).toList();
+      return activeNotices.isNotEmpty ? activeNotices.first : null;
+    }
   }
 
   static List<InvestmentNotice> getAllInvestmentNotices() {
-    final box = Hive.box<InvestmentNotice>(investmentNoticeBoxName);
-    return box.values.toList()..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    if (_isWebPlatform) {
+      return [];
+    } else {
+      final box = Hive.box<InvestmentNotice>(investmentNoticeBoxName);
+      return box.values.toList()..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    }
   }
 
   static Future<void> addInvestmentNotice(InvestmentNotice notice) async {
-    final box = Hive.box<InvestmentNotice>(investmentNoticeBoxName);
-    await box.add(notice);
+    if (!_isWebPlatform) {
+      final box = Hive.box<InvestmentNotice>(investmentNoticeBoxName);
+      await box.add(notice);
+    }
   }
 
   static Future<void> updateInvestmentNotice(int index, InvestmentNotice notice) async {
-    final box = Hive.box<InvestmentNotice>(investmentNoticeBoxName);
-    await box.putAt(index, notice);
+    if (!_isWebPlatform) {
+      final box = Hive.box<InvestmentNotice>(investmentNoticeBoxName);
+      await box.putAt(index, notice);
+    }
   }
 
   static Future<void> deleteInvestmentNotice(int index) async {
-    final box = Hive.box<InvestmentNotice>(investmentNoticeBoxName);
-    await box.deleteAt(index);
+    if (!_isWebPlatform) {
+      final box = Hive.box<InvestmentNotice>(investmentNoticeBoxName);
+      await box.deleteAt(index);
+    }
   }
 }
