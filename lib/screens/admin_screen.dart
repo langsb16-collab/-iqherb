@@ -7,6 +7,7 @@ import 'admin_investment_notice_screen.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:typed_data';
+import 'dart:convert';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -409,9 +410,12 @@ class _AdminScreenState extends State<AdminScreen> {
                                 setDialogState(() {
                                   for (var file in result.files) {
                                     if (kIsWeb && file.bytes != null) {
+                                      // 웹 플랫폼: 이미지를 base64로 변환하여 저장
                                       uploadedImageBytes.add(file.bytes!);
-                                      uploadedImagePaths.add('uploaded_${file.name}');
+                                      final base64String = 'data:image/${file.extension};base64,${base64Encode(file.bytes!)}';
+                                      uploadedImagePaths.add(base64String);
                                     } else if (file.path != null) {
+                                      // 모바일 플랫폼: 파일 경로 저장
                                       uploadedImagePaths.add(file.path!);
                                     }
                                   }

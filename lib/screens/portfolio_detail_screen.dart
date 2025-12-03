@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/portfolio_provider.dart';
+import 'dart:convert';
 
 class PortfolioDetailScreen extends StatelessWidget {
   const PortfolioDetailScreen({super.key});
@@ -141,12 +142,21 @@ class PortfolioDetailScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      '이미지',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        const Text(
+                          '이미지',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Spacer(),
+                        Chip(
+                          label: Text('${portfolio.imageUrls.length}개'),
+                          backgroundColor: Colors.blue.shade50,
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     GridView.builder(
@@ -160,24 +170,11 @@ class PortfolioDetailScreen extends StatelessWidget {
                       ),
                       itemCount: portfolio.imageUrls.length,
                       itemBuilder: (context, index) {
+                        final imageUrl = portfolio.imageUrls[index];
+                        
                         return ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: CachedNetworkImage(
-                            imageUrl: portfolio.imageUrls[index],
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              color: Colors.grey.shade200,
-                              child: const Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                            ),
-                            errorWidget: (context, url, error) => Container(
-                              color: Colors.grey.shade300,
-                              child: const Center(
-                                child: Icon(Icons.image_not_supported),
-                              ),
-                            ),
-                          ),
+                          child: _buildPortfolioImage(imageUrl, index),
                         );
                       },
                     ),
@@ -218,6 +215,108 @@ class PortfolioDetailScreen extends StatelessWidget {
             const SizedBox(height: 40),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPortfolioImage(String imageUrl, int index) {
+    // HTTP URL 이미지
+    if (imageUrl.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          color: Colors.grey.shade200,
+          child: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+        errorWidget: (context, url, error) => Container(
+          color: Colors.grey.shade300,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.broken_image, size: 48),
+              const SizedBox(height: 8),
+              Text(
+                '이미지 로드 실패',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
+    // Base64 이미지 (data:image/... 형식)
+    if (imageUrl.startsWith('data:image')) {
+      try {
+        final base64String = imageUrl.split(',')[1];
+        final bytes = base64Decode(base64String);
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildPlaceholderImage(index),
+        );
+      } catch (e) {
+        return _buildPlaceholderImage(index);
+      }
+    }
+    
+    // 기타 경우 (로컬 파일 경로 등) - 플레이스홀더 표시
+    return _buildPlaceholderImage(index);
+  }
+
+  Widget _buildPlaceholderImage(int index) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.blue.shade100,
+            Colors.blue.shade50,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: Colors.blue.shade200, width: 2),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.image_outlined,
+            size: 64,
+            color: Colors.blue.shade300,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '이미지 ${index + 1}',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue.shade700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade200,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text(
+              '업로드됨',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

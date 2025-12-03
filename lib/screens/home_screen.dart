@@ -5,6 +5,7 @@ import '../providers/portfolio_provider.dart';
 import '../models/portfolio_item.dart';
 import '../services/data_service.dart';
 import 'investment_notice_screen.dart';
+import 'dart:convert';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -213,42 +214,7 @@ class HomeScreen extends StatelessWidget {
             // Thumbnail Image
             AspectRatio(
               aspectRatio: 16 / 9,
-              child: portfolio.imageUrls.isNotEmpty && portfolio.imageUrls.first.startsWith('http')
-                  ? CachedNetworkImage(
-                      imageUrl: portfolio.imageUrls.first,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: Colors.grey.shade200,
-                        child: const Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: _getGradientColor(portfolio.order).withValues(alpha: 0.1),
-                        child: Icon(
-                          _getIconForPortfolio(portfolio.order),
-                          size: 48,
-                          color: _getGradientColor(portfolio.order),
-                        ),
-                      ),
-                    )
-                  : Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            _getGradientColor(portfolio.order).withValues(alpha: 0.3),
-                            _getGradientColor(portfolio.order).withValues(alpha: 0.1),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: Icon(
-                        _getIconForPortfolio(portfolio.order),
-                        size: 48,
-                        color: _getGradientColor(portfolio.order),
-                      ),
-                    ),
+              child: _buildThumbnailImage(portfolio),
             ),
             
             // Content
@@ -304,6 +270,67 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildThumbnailImage(PortfolioItem portfolio) {
+    if (portfolio.imageUrls.isEmpty) {
+      return _buildPlaceholderImage(portfolio);
+    }
+
+    final imageUrl = portfolio.imageUrls.first;
+    
+    // HTTP URL \uc774\ubbf8\uc9c0 (CachedNetworkImage \uc0ac\uc6a9)
+    if (imageUrl.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          color: Colors.grey.shade200,
+          child: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+        errorWidget: (context, url, error) => _buildPlaceholderImage(portfolio),
+      );
+    }
+    
+    // Base64 \uc774\ubbf8\uc9c0 (data:image/... \ud615\uc2dd)
+    if (imageUrl.startsWith('data:image')) {
+      try {
+        final base64String = imageUrl.split(',')[1];
+        final bytes = base64Decode(base64String);
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildPlaceholderImage(portfolio),
+        );
+      } catch (e) {
+        return _buildPlaceholderImage(portfolio);
+      }
+    }
+    
+    // \uae30\ud0c0 \uacbd\uc6b0 (\ub85c\uceec \ud30c\uc77c \uacbd\ub85c \ub4f1) - \ud50c\ub808\uc774\uc2a4\ud640\ub354 \ud45c\uc2dc
+    return _buildPlaceholderImage(portfolio);
+  }
+
+  Widget _buildPlaceholderImage(PortfolioItem portfolio) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            _getGradientColor(portfolio.order).withValues(alpha: 0.3),
+            _getGradientColor(portfolio.order).withValues(alpha: 0.1),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Icon(
+        _getIconForPortfolio(portfolio.order),
+        size: 48,
+        color: _getGradientColor(portfolio.order),
       ),
     );
   }
