@@ -96,6 +96,77 @@ class PortfolioDetailScreen extends StatelessWidget {
                     portfolio.description,
                     style: const TextStyle(fontSize: 16, height: 1.5),
                   ),
+                  
+                  // Category & Amount Buttons
+                  if (portfolio.category != null || portfolio.amount != null) ...[
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        if (portfolio.category != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade600,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.red.shade300,
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.category, color: Colors.white, size: 18),
+                                const SizedBox(width: 6),
+                                Text(
+                                  portfolio.category!,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (portfolio.category != null && portfolio.amount != null)
+                          const SizedBox(width: 12),
+                        if (portfolio.amount != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.yellow.shade700,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.yellow.shade300,
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.attach_money, color: Colors.white, size: 18),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${portfolio.amount}만원',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

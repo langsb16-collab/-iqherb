@@ -37,6 +37,12 @@ class PortfolioItem extends HiveObject {
   @HiveField(10)
   DateTime updatedAt;
 
+  @HiveField(11)
+  String? category; // 투자, 대출, 수익분배
+
+  @HiveField(12)
+  int? amount; // 금액 (단위: 만원)
+
   PortfolioItem({
     required this.id,
     required this.title,
@@ -49,6 +55,8 @@ class PortfolioItem extends HiveObject {
     required this.order,
     DateTime? createdAt,
     DateTime? updatedAt,
+    this.category,
+    this.amount,
   })  : createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
 
@@ -65,6 +73,8 @@ class PortfolioItem extends HiveObject {
       'order': order,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'category': category,
+      'amount': amount,
     };
   }
 
@@ -81,6 +91,8 @@ class PortfolioItem extends HiveObject {
       order: json['order'] as int,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      category: json['category'] as String?,
+      amount: json['amount'] as int?,
     );
   }
 }

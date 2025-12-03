@@ -497,9 +497,13 @@ class _AdminScreenState extends State<AdminScreen> {
     final languagesController = TextEditingController(text: portfolio?.languages.join(', ') ?? '');
     final youtubeLinksController = TextEditingController(text: portfolio?.youtubeLinks.join('\n') ?? '');
     final orderController = TextEditingController(text: portfolio?.order.toString() ?? '${provider.portfolios.length + 1}');
+    final amountController = TextEditingController(text: portfolio?.amount?.toString() ?? '');
     
     // 업로드된 이미지 관리 (base64 문자열로 저장)
     List<String> uploadedImagePaths = List<String>.from(portfolio?.imageUrls ?? []);
+    
+    // 카테고리 선택 상태 (투자, 대출, 수익분배)
+    String? selectedCategory = portfolio?.category;
 
     showDialog(
       context: context,
@@ -725,6 +729,57 @@ class _AdminScreenState extends State<AdminScreen> {
                   maxLines: 3,
                 ),
                 const SizedBox(height: 12),
+                // 카테고리 선택
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '카테고리 선택',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade400),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: selectedCategory,
+                          hint: const Text('카테고리를 선택하세요'),
+                          items: const [
+                            DropdownMenuItem(value: '투자', child: Text('투자')),
+                            DropdownMenuItem(value: '대출', child: Text('대출')),
+                            DropdownMenuItem(value: '수익분배', child: Text('수익분배')),
+                          ],
+                          onChanged: (value) {
+                            setDialogState(() {
+                              selectedCategory = value;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // 금액 입력
+                TextField(
+                  controller: amountController,
+                  decoration: const InputDecoration(
+                    labelText: '금액 (단위: 만원)',
+                    border: OutlineInputBorder(),
+                    hintText: '예: 1000 (1000만원)',
+                    prefixIcon: Icon(Icons.attach_money),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: orderController,
                   decoration: const InputDecoration(
@@ -767,6 +822,8 @@ class _AdminScreenState extends State<AdminScreen> {
                     ? []
                     : youtubeLinksController.text.split('\n').where((e) => e.trim().isNotEmpty).toList(),
                 order: int.tryParse(orderController.text) ?? 1,
+                category: selectedCategory,
+                amount: amountController.text.isEmpty ? null : int.tryParse(amountController.text),
               );
 
               if (kDebugMode) {

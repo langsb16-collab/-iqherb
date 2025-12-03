@@ -256,6 +256,47 @@ class HomeScreen extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 8),
+                    
+                    // Category & Amount Buttons
+                    Row(
+                      children: [
+                        if (portfolio.category != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade600,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              portfolio.category!,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        if (portfolio.category != null && portfolio.amount != null)
+                          const SizedBox(width: 6),
+                        if (portfolio.amount != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.yellow.shade700,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              '${portfolio.amount}만원',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                     const Spacer(),
                     
                     // Languages
