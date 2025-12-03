@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/portfolio_provider.dart';
 import '../models/portfolio_item.dart';
+import '../services/data_service.dart';
+import 'investment_notice_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -17,6 +19,37 @@ class HomeScreen extends StatelessWidget {
         ),
         centerTitle: true,
         actions: [
+          // 투자 관련 주요 안내 버튼
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                final notice = DataService.getInvestmentNotice();
+                if (notice != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => InvestmentNoticeScreen(notice: notice),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('등록된 투자 안내가 없습니다.'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.campaign, size: 20),
+              label: const Text('투자 관련 주요 안내'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.info_outline),
             onPressed: () {
@@ -178,49 +211,45 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Thumbnail Image
-            if (portfolio.imageUrls.isNotEmpty)
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: CachedNetworkImage(
-                  imageUrl: portfolio.imageUrls.first,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    color: Colors.grey.shade200,
-                    child: const Center(
-                      child: CircularProgressIndicator(),
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: portfolio.imageUrls.isNotEmpty && portfolio.imageUrls.first.startsWith('http')
+                  ? CachedNetworkImage(
+                      imageUrl: portfolio.imageUrls.first,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        color: _getGradientColor(portfolio.order).withValues(alpha: 0.1),
+                        child: Icon(
+                          _getIconForPortfolio(portfolio.order),
+                          size: 48,
+                          color: _getGradientColor(portfolio.order),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            _getGradientColor(portfolio.order).withValues(alpha: 0.3),
+                            _getGradientColor(portfolio.order).withValues(alpha: 0.1),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: Icon(
+                        _getIconForPortfolio(portfolio.order),
+                        size: 48,
+                        color: _getGradientColor(portfolio.order),
+                      ),
                     ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    color: _getGradientColor(portfolio.order).withValues(alpha: 0.1),
-                    child: Icon(
-                      _getIconForPortfolio(portfolio.order),
-                      size: 48,
-                      color: _getGradientColor(portfolio.order),
-                    ),
-                  ),
-                ),
-              )
-            else
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        _getGradientColor(portfolio.order).withValues(alpha: 0.3),
-                        _getGradientColor(portfolio.order).withValues(alpha: 0.1),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Icon(
-                    _getIconForPortfolio(portfolio.order),
-                    size: 48,
-                    color: _getGradientColor(portfolio.order),
-                  ),
-                ),
-              ),
+            ),
             
             // Content
             Expanded(

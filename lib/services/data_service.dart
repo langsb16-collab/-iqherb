@@ -1,10 +1,12 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/portfolio_item.dart';
 import '../models/company_info.dart';
+import '../models/investment_notice.dart';
 
 class DataService {
   static const String portfolioBoxName = 'portfolios';
   static const String companyBoxName = 'company';
+  static const String investmentNoticeBoxName = 'investment_notices';
 
   static Future<void> initialize() async {
     await Hive.initFlutter();
@@ -12,10 +14,12 @@ class DataService {
     // Register adapters
     Hive.registerAdapter(PortfolioItemAdapter());
     Hive.registerAdapter(CompanyInfoAdapter());
+    Hive.registerAdapter(InvestmentNoticeAdapter());
 
     // Open boxes
     await Hive.openBox<PortfolioItem>(portfolioBoxName);
     await Hive.openBox<CompanyInfo>(companyBoxName);
+    await Hive.openBox<InvestmentNotice>(investmentNoticeBoxName);
 
     // Initialize default data if empty
     await _initializeDefaultData();
@@ -371,5 +375,32 @@ class DataService {
     } else {
       await box.add(info);
     }
+  }
+
+  // Investment Notice operations
+  static InvestmentNotice? getInvestmentNotice() {
+    final box = Hive.box<InvestmentNotice>(investmentNoticeBoxName);
+    final activeNotices = box.values.where((notice) => notice.isActive).toList();
+    return activeNotices.isNotEmpty ? activeNotices.first : null;
+  }
+
+  static List<InvestmentNotice> getAllInvestmentNotices() {
+    final box = Hive.box<InvestmentNotice>(investmentNoticeBoxName);
+    return box.values.toList()..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+  }
+
+  static Future<void> addInvestmentNotice(InvestmentNotice notice) async {
+    final box = Hive.box<InvestmentNotice>(investmentNoticeBoxName);
+    await box.add(notice);
+  }
+
+  static Future<void> updateInvestmentNotice(int index, InvestmentNotice notice) async {
+    final box = Hive.box<InvestmentNotice>(investmentNoticeBoxName);
+    await box.putAt(index, notice);
+  }
+
+  static Future<void> deleteInvestmentNotice(int index) async {
+    final box = Hive.box<InvestmentNotice>(investmentNoticeBoxName);
+    await box.deleteAt(index);
   }
 }
