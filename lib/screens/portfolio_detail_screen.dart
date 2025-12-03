@@ -172,9 +172,21 @@ class PortfolioDetailScreen extends StatelessWidget {
                       itemBuilder: (context, index) {
                         final imageUrl = portfolio.imageUrls[index];
                         
-                        return ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: _buildPortfolioImage(imageUrl, index),
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300, width: 1),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: _buildPortfolioImage(imageUrl, index),
+                              ),
+                            ),
+                          ),
                         );
                       },
                     ),

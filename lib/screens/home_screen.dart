@@ -215,8 +215,16 @@ class HomeScreen extends StatelessWidget {
             Container(
               height: 200, // 고정 높이
               width: double.infinity,
-              color: Colors.grey.shade100,
-              child: _buildThumbnailImage(portfolio),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                border: Border.all(color: Colors.grey.shade300, width: 1),
+              ),
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: _buildThumbnailImage(portfolio),
+                ),
+              ),
             ),
             
             // Content

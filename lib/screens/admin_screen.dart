@@ -456,7 +456,7 @@ class _AdminScreenState extends State<AdminScreen> {
         final bytes = base64Decode(base64String);
         return Image.memory(
           bytes,
-          fit: BoxFit.cover,
+          fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) => const Center(
             child: Icon(Icons.broken_image, size: 32, color: Colors.red),
           ),
@@ -472,7 +472,7 @@ class _AdminScreenState extends State<AdminScreen> {
     if (imagePath.startsWith('http')) {
       return Image.network(
         imagePath,
-        fit: BoxFit.cover,
+        fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) => const Center(
           child: Icon(Icons.broken_image, size: 32, color: Colors.orange),
         ),
