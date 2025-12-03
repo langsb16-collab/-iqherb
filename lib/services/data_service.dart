@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/portfolio_item.dart';
 import '../models/company_info.dart';
 import '../models/investment_notice.dart';
+
+// Conditional import - only import Hive on non-web platforms
+import 'package:hive_flutter/hive_flutter.dart' if (dart.library.html) 'data_service_stub.dart';
 
 class DataService {
   static const String portfolioBoxName = 'portfolios';
@@ -14,14 +16,29 @@ class DataService {
   // Web platform uses shared_preferences
   static SharedPreferences? _prefs;
   static bool _isWebPlatform = kIsWeb;
+  static bool _isInitialized = false;
 
   static Future<void> initialize() async {
-    if (_isWebPlatform) {
-      // Web platform: Use shared_preferences (stable, no IndexedDB issues)
-      await _initializeWebStorage();
-    } else {
-      // Mobile platform: Use Hive (high performance)
-      await _initializeHive();
+    if (_isInitialized) {
+      debugPrint('⚠️ DataService already initialized, skipping...');
+      return;
+    }
+
+    try {
+      if (_isWebPlatform) {
+        // Web platform: Use shared_preferences (stable, no IndexedDB issues)
+        debugPrint('🌐 Initializing web storage (SharedPreferences)...');
+        await _initializeWebStorage();
+      } else {
+        // Mobile platform: Use Hive (high performance)
+        debugPrint('📱 Initializing mobile storage (Hive)...');
+        await _initializeHive();
+      }
+      _isInitialized = true;
+      debugPrint('✅ DataService initialization complete!');
+    } catch (e) {
+      debugPrint('❌ DataService initialization error: $e');
+      rethrow;
     }
   }
 
