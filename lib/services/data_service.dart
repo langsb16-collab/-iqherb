@@ -75,6 +75,8 @@ class DataService {
         languages: ['한국어', '영어', '중국어', '일본어'],
         imageUrls: ['assets/images/projects/cashiq_brain_care.png'],
         order: 1,
+        category: null,
+        amount: null,
       ),
       PortfolioItem(
         id: 'jt8282',
@@ -103,6 +105,8 @@ class DataService {
         languages: ['한국어', '영어', '중국어', '일본어', '베트남어', '아랍어'],
         imageUrls: ['assets/images/projects/oracle_ai.png'],
         order: 2,
+        category: null,
+        amount: null,
       ),
       PortfolioItem(
         id: 'jt365',
@@ -147,6 +151,8 @@ class DataService {
         languages: ['한국어', '영어', '중국어', '일본어'],
         imageUrls: ['assets/images/projects/jeolla_food.png'],
         order: 3,
+        category: null,
+        amount: null,
       ),
       PortfolioItem(
         id: 'jtbit',
@@ -185,6 +191,8 @@ class DataService {
         languages: ['한국어', '영어', '중국어', '일본어', '베트남어', '아랍어'],
         imageUrls: ['assets/images/projects/couple_gate.png'],
         order: 4,
+        category: null,
+        amount: null,
       ),
       PortfolioItem(
         id: 'puke365',
@@ -221,6 +229,8 @@ class DataService {
         languages: ['한국어', '영어', '중국어', '일본어', '베트남어', '아랍어'],
         imageUrls: ['assets/images/projects/puke365_food_ai.png'],
         order: 5,
+        category: null,
+        amount: null,
       ),
       PortfolioItem(
         id: 'meditour',
@@ -260,6 +270,8 @@ class DataService {
         languages: ['한국어', '영어', '중국어', '일본어', '베트남어', '아랍어'],
         imageUrls: ['assets/images/projects/medi_trip.png'],
         order: 6,
+        category: null,
+        amount: null,
       ),
       PortfolioItem(
         id: 'tourit',
@@ -297,6 +309,8 @@ class DataService {
         languages: ['한국어', '영어', '중국어', '일본어', '베트남어', '아랍어', '태국어'],
         imageUrls: ['assets/images/projects/care_walk.png'],
         order: 7,
+        category: null,
+        amount: null,
       ),
     ];
 
