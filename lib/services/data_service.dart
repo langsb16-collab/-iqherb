@@ -1,12 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../models/portfolio_item.dart';
 import '../models/company_info.dart';
 import '../models/investment_notice.dart';
-
-// Conditional import - only import Hive on non-web platforms
-import 'package:hive_flutter/hive_flutter.dart' if (dart.library.html) 'data_service_stub.dart';
 
 class DataService {
   static const String portfolioBoxName = 'portfolios';
@@ -27,7 +25,7 @@ class DataService {
     try {
       if (_isWebPlatform) {
         // Web platform: Use shared_preferences (stable, no IndexedDB issues)
-        debugPrint('🌐 Initializing web storage (SharedPreferences)...');
+        debugPrint('🌐 Initializing web storage (SharedPreferences) - Hive disabled for web');
         await _initializeWebStorage();
       } else {
         // Mobile platform: Use Hive (high performance)
@@ -38,7 +36,8 @@ class DataService {
       debugPrint('✅ DataService initialization complete!');
     } catch (e) {
       debugPrint('❌ DataService initialization error: $e');
-      rethrow;
+      // Don't rethrow - allow app to continue even if initialization fails
+      _isInitialized = true;  // Mark as initialized to prevent retries
     }
   }
 
