@@ -6,7 +6,6 @@ import 'admin_media_manager_screen.dart';
 import 'admin_investment_notice_screen.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:typed_data';
 import 'dart:convert';
 
 class AdminScreen extends StatefulWidget {
@@ -373,6 +372,43 @@ class _AdminScreenState extends State<AdminScreen> {
     );
   }
 
+  Widget _buildImagePreview(String imagePath) {
+    // Base64 이미지 (data:image/... 형식)
+    if (imagePath.startsWith('data:image')) {
+      try {
+        final base64String = imagePath.split(',')[1];
+        final bytes = base64Decode(base64String);
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => const Center(
+            child: Icon(Icons.broken_image, size: 32, color: Colors.red),
+          ),
+        );
+      } catch (e) {
+        return const Center(
+          child: Icon(Icons.broken_image, size: 32, color: Colors.red),
+        );
+      }
+    }
+    
+    // HTTP URL 이미지
+    if (imagePath.startsWith('http')) {
+      return Image.network(
+        imagePath,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => const Center(
+          child: Icon(Icons.broken_image, size: 32, color: Colors.orange),
+        ),
+      );
+    }
+    
+    // 기타 경우 (로컬 파일 경로 등)
+    return const Center(
+      child: Icon(Icons.image, size: 32, color: Colors.grey),
+    );
+  }
+
   void _showAddEditDialog(BuildContext context, int? index) {
     final provider = Provider.of<PortfolioProvider>(context, listen: false);
     final isEdit = index != null;
@@ -386,9 +422,8 @@ class _AdminScreenState extends State<AdminScreen> {
     final youtubeLinksController = TextEditingController(text: portfolio?.youtubeLinks.join('\n') ?? '');
     final orderController = TextEditingController(text: portfolio?.order.toString() ?? '${provider.portfolios.length + 1}');
     
-    // 업로드된 이미지 관리
+    // 업로드된 이미지 관리 (base64 문자열로 저장)
     List<String> uploadedImagePaths = List<String>.from(portfolio?.imageUrls ?? []);
-    List<Uint8List> uploadedImageBytes = [];
 
     showDialog(
       context: context,
@@ -469,24 +504,39 @@ class _AdminScreenState extends State<AdminScreen> {
                                 withData: kIsWeb,
                               );
 
-                              if (result != null) {
+                              if (result != null && result.files.isNotEmpty) {
                                 setDialogState(() {
                                   for (var file in result.files) {
                                     if (kIsWeb && file.bytes != null) {
                                       // 웹 플랫폼: 이미지를 base64로 변환하여 저장
-                                      uploadedImageBytes.add(file.bytes!);
-                                      final base64String = 'data:image/${file.extension};base64,${base64Encode(file.bytes!)}';
+                                      final extension = file.extension ?? 'png';
+                                      final base64String = 'data:image/$extension;base64,${base64Encode(file.bytes!)}';
                                       uploadedImagePaths.add(base64String);
+                                      if (kDebugMode) {
+                                        debugPrint('✅ 이미지 추가: ${file.name} (${(file.bytes!.length / 1024).toStringAsFixed(1)} KB)');
+                                      }
                                     } else if (file.path != null) {
                                       // 모바일 플랫폼: 파일 경로 저장
                                       uploadedImagePaths.add(file.path!);
+                                      if (kDebugMode) {
+                                        debugPrint('✅ 이미지 추가: ${file.path}');
+                                      }
                                     }
                                   }
                                 });
+                                
+                                if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('${result.files.length}개의 이미지가 추가되었습니다.'),
+                                    content: Row(
+                                      children: [
+                                        const Icon(Icons.check_circle, color: Colors.white),
+                                        const SizedBox(width: 8),
+                                        Text('${result.files.length}개의 이미지가 추가되었습니다.'),
+                                      ],
+                                    ),
                                     backgroundColor: Colors.green,
+                                    duration: const Duration(seconds: 2),
                                   ),
                                 );
                               }
@@ -546,23 +596,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                       ),
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(8),
-                                        child: i < uploadedImageBytes.length
-                                            ? Image.memory(
-                                                uploadedImageBytes[i],
-                                                fit: BoxFit.cover,
-                                              )
-                                            : uploadedImagePaths[i].startsWith('http')
-                                                ? Image.network(
-                                                    uploadedImagePaths[i],
-                                                    fit: BoxFit.cover,
-                                                    errorBuilder: (context, error, stackTrace) =>
-                                                        const Center(
-                                                          child: Icon(Icons.broken_image, size: 32),
-                                                        ),
-                                                  )
-                                                : const Center(
-                                                    child: Icon(Icons.image, size: 32),
-                                                  ),
+                                        child: _buildImagePreview(uploadedImagePaths[i]),
                                       ),
                                     ),
                                     Positioned(
@@ -571,9 +605,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                       child: InkWell(
                                         onTap: () {
                                           setDialogState(() {
-                                            if (i < uploadedImageBytes.length) {
-                                              uploadedImageBytes.removeAt(i);
-                                            }
+                                            // uploadedImagePaths만 관리 (uploadedImageBytes는 미리보기용이므로 제거)
                                             uploadedImagePaths.removeAt(i);
                                           });
                                         },
@@ -661,6 +693,20 @@ class _AdminScreenState extends State<AdminScreen> {
                 order: int.tryParse(orderController.text) ?? 1,
               );
 
+              if (kDebugMode) {
+                debugPrint('📝 프로젝트 저장: ${newPortfolio.title}');
+                debugPrint('🖼️  이미지 개수: ${uploadedImagePaths.length}');
+                for (var i = 0; i < uploadedImagePaths.length; i++) {
+                  final path = uploadedImagePaths[i];
+                  final type = path.startsWith('data:image') ? 'Base64' : 
+                               path.startsWith('http') ? 'HTTP URL' : 'Local';
+                  final size = path.startsWith('data:image') 
+                      ? '${(path.length / 1024).toStringAsFixed(1)} KB' 
+                      : '';
+                  debugPrint('  [$i] $type $size');
+                }
+              }
+
               if (isEdit) {
                 provider.updatePortfolio(index, newPortfolio);
               } else {
@@ -669,7 +715,17 @@ class _AdminScreenState extends State<AdminScreen> {
 
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(isEdit ? '프로젝트가 수정되었습니다.' : '프로젝트가 추가되었습니다.')),
+                SnackBar(
+                  content: Row(
+                    children: [
+                      const Icon(Icons.check_circle, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Text(isEdit ? '✅ 프로젝트가 수정되었습니다.' : '✅ 프로젝트가 추가되었습니다.'),
+                    ],
+                  ),
+                  backgroundColor: Colors.green,
+                  duration: const Duration(seconds: 2),
+                ),
               );
             },
             child: Text(isEdit ? '수정' : '추가'),
