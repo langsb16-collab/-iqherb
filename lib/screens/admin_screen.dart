@@ -27,47 +27,109 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 
   void _authenticate() {
-    // 입력값에서 공백 제거 및 소문자 변환
-    final password = _passwordController.text.trim().toLowerCase();
-    final correctPassword = _adminPassword.toLowerCase();
+    // 입력값에서 모든 공백과 특수문자 제거 후 소문자 변환
+    final inputText = _passwordController.text;
+    final cleanedInput = inputText.replaceAll(RegExp(r'\s+'), '').toLowerCase();
+    final correctPassword = 'admin1234';
     
+    // 디버그 출력 (개발자 콘솔에서 확인 가능)
     if (kDebugMode) {
-      debugPrint('입력된 비밀번호: "$password" (길이: ${password.length})');
-      debugPrint('정답 비밀번호: "$correctPassword" (길이: ${correctPassword.length})');
-      debugPrint('비교 결과: ${password == correctPassword}');
+      debugPrint('═══════════════════════════════════');
+      debugPrint('🔐 관리자 로그인 시도');
+      debugPrint('═══════════════════════════════════');
+      debugPrint('원본 입력값: "$inputText"');
+      debugPrint('정제된 입력값: "$cleanedInput"');
+      debugPrint('정답 비밀번호: "$correctPassword"');
+      debugPrint('비교 결과: ${cleanedInput == correctPassword}');
+      debugPrint('입력값 길이: ${cleanedInput.length}');
+      debugPrint('정답 길이: ${correctPassword.length}');
+      
+      // 각 문자 비교
+      if (cleanedInput.length == correctPassword.length) {
+        for (int i = 0; i < cleanedInput.length; i++) {
+          if (cleanedInput[i] != correctPassword[i]) {
+            debugPrint('❌ 문자 불일치 [인덱스 $i]: "${cleanedInput[i]}" != "${correctPassword[i]}"');
+          }
+        }
+      }
+      debugPrint('═══════════════════════════════════');
     }
     
-    if (password == correctPassword) {
+    // 비밀번호 검증
+    final isValid = cleanedInput == correctPassword;
+    
+    if (isValid) {
       setState(() {
         _isAuthenticated = true;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ 로그인 성공!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '❌ 비밀번호가 올바르지 않습니다.',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 4),
-              Text('입력하신 비밀번호: "$password"'),
-              const Text('올바른 비밀번호: "admin1234"'),
-            ],
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white, size: 24),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '✅ 로그인 성공!',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
           ),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 5),
-        ),
-      );
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.error, color: Colors.white, size: 24),
+                    SizedBox(width: 8),
+                    Text(
+                      '❌ 비밀번호가 올바르지 않습니다',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('입력값: "$cleanedInput" (${cleanedInput.length}자)'),
+                      const SizedBox(height: 4),
+                      const Text('정답: "admin1234" (9자)'),
+                      const SizedBox(height: 8),
+                      const Text(
+                        '💡 정확히 "admin1234"를 입력해주세요',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 7),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -148,16 +210,30 @@ class _AdminScreenState extends State<AdminScreen> {
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
+                      child: ElevatedButton.icon(
                         onPressed: _authenticate,
                         style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue.shade700,
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
                           textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
+                          elevation: 4,
                         ),
-                        child: const Text('로그인'),
+                        icon: const Icon(Icons.login, size: 24),
+                        label: const Text('로그인'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '브라우저 개발자 도구(F12)를 열어\n콘솔에서 자세한 로그를 확인하세요',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                        fontStyle: FontStyle.italic,
                       ),
                     ),
                   ],
