@@ -29,8 +29,28 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>portfolio_manager</title>
+  <title>Portfolio Manager</title>
   <link rel="manifest" href="manifest.json">
+  
+  <script>
+    // IndexedDB cleanup utility for Hive
+    window.clearHiveDatabase = function() {
+      if (window.indexedDB) {
+        const dbNames = ['portfolios', 'company', 'investment_notices'];
+        dbNames.forEach(function(dbName) {
+          window.indexedDB.deleteDatabase(dbName);
+        });
+        console.log('✅ IndexedDB cleared. Please refresh the page.');
+      }
+    };
+    
+    // Auto-clear on specific errors (optional)
+    window.addEventListener('error', function(event) {
+      if (event.message && event.message.includes('object store')) {
+        console.warn('⚠️ IndexedDB error detected. You can clear the database by running: clearHiveDatabase()');
+      }
+    });
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

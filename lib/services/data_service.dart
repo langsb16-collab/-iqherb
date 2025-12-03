@@ -10,26 +10,55 @@ class DataService {
   static const String investmentNoticeBoxName = 'investment_notices';
 
   static Future<void> initialize() async {
-    try {
-      await Hive.initFlutter();
-      
-      // Register adapters
-      Hive.registerAdapter(PortfolioItemAdapter());
-      Hive.registerAdapter(CompanyInfoAdapter());
-      Hive.registerAdapter(InvestmentNoticeAdapter());
+    int retryCount = 0;
+    const maxRetries = 3;
+    
+    while (retryCount < maxRetries) {
+      try {
+        await Hive.initFlutter();
+        
+        // Register adapters (only register if not already registered)
+        if (!Hive.isAdapterRegistered(0)) {
+          Hive.registerAdapter(PortfolioItemAdapter());
+        }
+        if (!Hive.isAdapterRegistered(1)) {
+          Hive.registerAdapter(CompanyInfoAdapter());
+        }
+        if (!Hive.isAdapterRegistered(2)) {
+          Hive.registerAdapter(InvestmentNoticeAdapter());
+        }
 
-      // Open boxes with error recovery
-      await _openBoxWithRetry<PortfolioItem>(portfolioBoxName);
-      await _openBoxWithRetry<CompanyInfo>(companyBoxName);
-      await _openBoxWithRetry<InvestmentNotice>(investmentNoticeBoxName);
+        // Open boxes with error recovery
+        await _openBoxWithRetry<PortfolioItem>(portfolioBoxName);
+        await _openBoxWithRetry<CompanyInfo>(companyBoxName);
+        await _openBoxWithRetry<InvestmentNotice>(investmentNoticeBoxName);
 
-      // Initialize default data if empty
-      await _initializeDefaultData();
-    } catch (e) {
-      // If initialization fails, try to recover by deleting corrupted boxes
-      debugPrint('⚠️ Hive initialization error: $e');
-      debugPrint('🔄 Attempting to recover by clearing corrupted data...');
-      await _recoverFromError();
+        // Initialize default data if empty
+        await _initializeDefaultData();
+        
+        debugPrint('✅ Hive database initialized successfully');
+        return; // Success!
+        
+      } catch (e) {
+        retryCount++;
+        debugPrint('⚠️ Hive initialization error (attempt $retryCount/$maxRetries): $e');
+        
+        if (retryCount < maxRetries) {
+          debugPrint('🔄 Retrying initialization...');
+          await Future.delayed(Duration(milliseconds: 500 * retryCount));
+          
+          // Try to recover by deleting corrupted boxes
+          try {
+            await _recoverFromError();
+          } catch (recoveryError) {
+            debugPrint('⚠️ Recovery attempt failed: $recoveryError');
+          }
+        } else {
+          debugPrint('❌ Failed to initialize Hive after $maxRetries attempts');
+          debugPrint('⚠️ App will continue with limited functionality');
+          rethrow;
+        }
+      }
     }
   }
 
