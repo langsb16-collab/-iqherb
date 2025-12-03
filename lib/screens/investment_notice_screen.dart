@@ -18,35 +18,30 @@ class InvestmentNoticeScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 800, maxHeight: 600),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppBar(
-                title: const Text('이미지 보기'),
-                automaticallyImplyLeading: false,
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              Expanded(
-                child: InteractiveViewer(
-                  child: Center(
-                    child: Image.network(
-                      imageUrl,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const Icon(Icons.broken_image, size: 48),
-                    ),
-                  ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppBar(
+              title: const Text('이미지 보기'),
+              automaticallyImplyLeading: false,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            Flexible(
+              child: InteractiveViewer(
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Center(child: Icon(Icons.broken_image, size: 64)),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -66,7 +61,7 @@ class InvestmentNoticeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 제목
+            // 제목 헤더
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -185,58 +180,127 @@ class InvestmentNoticeScreen extends StatelessWidget {
                         ],
                       ),
                       const Divider(height: 24),
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 1,
-                        ),
-                        itemCount: notice.imageUrls.length,
-                        itemBuilder: (context, index) {
-                          final imageUrl = notice.imageUrls[index];
-                          return InkWell(
-                            onTap: imageUrl.startsWith('http')
-                                ? () => _showImageDialog(context, imageUrl)
-                                : null,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: imageUrl.startsWith('http')
-                                    ? Image.network(
-                                        imageUrl,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) =>
-                                            Container(
-                                          color: Colors.grey.shade200,
-                                          child: const Icon(Icons.broken_image, size: 32),
-                                        ),
-                                      )
-                                    : Container(
-                                        color: Colors.grey.shade200,
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            const Icon(Icons.image, size: 32, color: Colors.grey),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              '이미지 ${index + 1}',
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                color: Colors.grey.shade600,
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          int crossAxisCount = 2;
+                          if (constraints.maxWidth > 900) {
+                            crossAxisCount = 4;
+                          } else if (constraints.maxWidth > 600) {
+                            crossAxisCount = 3;
+                          }
+                          
+                          return GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: crossAxisCount,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: 1,
+                            ),
+                            itemCount: notice.imageUrls.length,
+                            itemBuilder: (context, index) {
+                              final imageUrl = notice.imageUrls[index];
+                              final isHttpUrl = imageUrl.startsWith('http');
+                              
+                              return InkWell(
+                                onTap: isHttpUrl
+                                    ? () => _showImageDialog(context, imageUrl)
+                                    : null,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey.shade300, width: 2),
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.1),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        if (isHttpUrl)
+                                          Image.network(
+                                            imageUrl,
+                                            fit: BoxFit.cover,
+                                            loadingBuilder: (context, child, loadingProgress) {
+                                              if (loadingProgress == null) return child;
+                                              return Container(
+                                                color: Colors.grey.shade200,
+                                                child: const Center(
+                                                  child: CircularProgressIndicator(),
+                                                ),
+                                              );
+                                            },
+                                            errorBuilder: (context, error, stackTrace) =>
+                                                Container(
+                                              color: Colors.grey.shade200,
+                                              child: const Column(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(Icons.broken_image, size: 32, color: Colors.grey),
+                                                  SizedBox(height: 4),
+                                                  Text('이미지 로드 실패', style: TextStyle(fontSize: 10)),
+                                                ],
                                               ),
                                             ),
-                                          ],
-                                        ),
-                                      ),
-                              ),
-                            ),
+                                          )
+                                        else
+                                          Container(
+                                            color: Colors.grey.shade200,
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(Icons.image, size: 48, color: Colors.grey.shade400),
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  '이미지 ${index + 1}',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey.shade600,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  '업로드됨',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    color: Colors.grey.shade500,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        // 클릭 가능 표시
+                                        if (isHttpUrl)
+                                          Positioned(
+                                            top: 8,
+                                            right: 8,
+                                            child: Container(
+                                              padding: const EdgeInsets.all(6),
+                                              decoration: BoxDecoration(
+                                                color: Colors.black.withValues(alpha: 0.6),
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.zoom_in,
+                                                size: 16,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           );
                         },
                       ),
@@ -247,7 +311,7 @@ class InvestmentNoticeScreen extends StatelessWidget {
               const SizedBox(height: 16),
             ],
 
-            // 동영상 플레이어
+            // 동영상
             if (notice.videoUrls.isNotEmpty) ...[
               Card(
                 child: Padding(
@@ -278,87 +342,79 @@ class InvestmentNoticeScreen extends StatelessWidget {
                         children: notice.videoUrls.asMap().entries.map((entry) {
                           final index = entry.key;
                           final videoUrl = entry.value;
-                          final fileName = videoUrl.split('/').last;
-                          
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             decoration: BoxDecoration(
-                              color: Colors.purple.shade50,
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.purple.shade50,
+                                  Colors.purple.shade100,
+                                ],
+                              ),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.purple.shade200),
+                              border: Border.all(color: Colors.purple.shade200, width: 2),
                             ),
-                            child: Column(
-                              children: [
-                                ListTile(
-                                  leading: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.purple.shade100,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(Icons.play_circle, color: Colors.purple, size: 32),
-                                  ),
-                                  title: Text(
-                                    '동영상 ${index + 1}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  subtitle: Text(
-                                    fileName,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                            child: ListTile(
+                              leading: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.purple,
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                                  child: Container(
-                                    width: double.infinity,
-                                    height: 200,
-                                    decoration: BoxDecoration(
-                                      color: Colors.black87,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Center(
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.video_library,
-                                            size: 64,
-                                            color: Colors.white.withValues(alpha: 0.7),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Text(
-                                            '동영상 미리보기',
-                                            style: TextStyle(
-                                              color: Colors.white.withValues(alpha: 0.7),
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            fileName,
-                                            style: TextStyle(
-                                              color: Colors.white.withValues(alpha: 0.5),
-                                              fontSize: 12,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
+                                child: const Icon(
+                                  Icons.play_circle_filled,
+                                  color: Colors.white,
+                                  size: 28,
                                 ),
-                              ],
+                              ),
+                              title: Text(
+                                '동영상 ${index + 1}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              subtitle: Text(
+                                videoUrl.length > 40
+                                    ? '${videoUrl.substring(0, 40)}...'
+                                    : videoUrl,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                              trailing: const Icon(
+                                Icons.arrow_forward_ios,
+                                color: Colors.purple,
+                                size: 16,
+                              ),
                             ),
                           );
                         }).toList(),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.amber.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Colors.amber.shade700, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '동영상은 관리자 페이지에서 업로드되었습니다.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.amber.shade900,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -398,7 +454,6 @@ class InvestmentNoticeScreen extends StatelessWidget {
                         children: notice.youtubeLinks.asMap().entries.map((entry) {
                           final index = entry.key;
                           final youtubeUrl = entry.value;
-                          
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             child: ElevatedButton(
@@ -406,39 +461,24 @@ class InvestmentNoticeScreen extends StatelessWidget {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.red,
                                 foregroundColor: Colors.white,
-                                minimumSize: const Size(double.infinity, 60),
+                                minimumSize: const Size(double.infinity, 56),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
+                                elevation: 2,
                               ),
                               child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.play_circle_filled, size: 32),
+                                  const Icon(Icons.play_circle_filled, size: 24),
                                   const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          '유튜브 영상 ${index + 1}',
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          '유튜브에서 보기',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.white.withValues(alpha: 0.8),
-                                          ),
-                                        ),
-                                      ],
+                                  Text(
+                                    '유튜브 영상 ${index + 1} 보기',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  const Icon(Icons.open_in_new),
                                 ],
                               ),
                             ),
