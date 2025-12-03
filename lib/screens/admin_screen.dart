@@ -28,21 +28,45 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 
   void _authenticate() {
-    final password = _passwordController.text.trim();
+    // 입력값에서 공백 제거 및 소문자 변환
+    final password = _passwordController.text.trim().toLowerCase();
+    final correctPassword = _adminPassword.toLowerCase();
+    
     if (kDebugMode) {
       debugPrint('입력된 비밀번호: "$password" (길이: ${password.length})');
-      debugPrint('정답 비밀번호: "$_adminPassword" (길이: ${_adminPassword.length})');
+      debugPrint('정답 비밀번호: "$correctPassword" (길이: ${correctPassword.length})');
+      debugPrint('비교 결과: ${password == correctPassword}');
     }
     
-    if (password == _adminPassword) {
+    if (password == correctPassword) {
       setState(() {
         _isAuthenticated = true;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ 로그인 성공!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('비밀번호가 올바르지 않습니다. (입력: "$password")'),
-          duration: const Duration(seconds: 3),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '❌ 비밀번호가 올바르지 않습니다.',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text('입력하신 비밀번호: "$password"'),
+              const Text('올바른 비밀번호: "admin1234"'),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
         ),
       );
     }
@@ -72,16 +96,55 @@ class _AdminScreenState extends State<AdminScreen> {
                       '관리자 인증',
                       style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.green.shade200),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.info_outline, size: 20, color: Colors.green),
+                          SizedBox(width: 8),
+                          Text(
+                            '비밀번호: admin1234',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     TextField(
                       controller: _passwordController,
                       obscureText: true,
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      keyboardType: TextInputType.visiblePassword,
                       decoration: const InputDecoration(
                         labelText: '비밀번호',
+                        hintText: 'admin1234',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.key),
+                        helperText: '비밀번호: admin1234',
+                        helperStyle: TextStyle(color: Colors.green),
                       ),
                       onSubmitted: (_) => _authenticate(),
+                      onChanged: (value) {
+                        // 입력할 때마다 공백 제거
+                        if (value.contains(' ')) {
+                          _passwordController.text = value.replaceAll(' ', '');
+                          _passwordController.selection = TextSelection.fromPosition(
+                            TextPosition(offset: _passwordController.text.length),
+                          );
+                        }
+                      },
                     ),
                     const SizedBox(height: 24),
                     SizedBox(
