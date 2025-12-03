@@ -212,8 +212,10 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Thumbnail Image
-            AspectRatio(
-              aspectRatio: 16 / 9,
+            Container(
+              height: 200, // 고정 높이
+              width: double.infinity,
+              color: Colors.grey.shade100,
               child: _buildThumbnailImage(portfolio),
             ),
             
@@ -285,7 +287,7 @@ class HomeScreen extends StatelessWidget {
     if (imageUrl.startsWith('http')) {
       return CachedNetworkImage(
         imageUrl: imageUrl,
-        fit: BoxFit.cover,
+        fit: BoxFit.contain,
         placeholder: (context, url) => Container(
           color: Colors.grey.shade200,
           child: const Center(
@@ -303,7 +305,7 @@ class HomeScreen extends StatelessWidget {
         final bytes = base64Decode(base64String);
         return Image.memory(
           bytes,
-          fit: BoxFit.cover,
+          fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) => _buildPlaceholderImage(portfolio),
         );
       } catch (e) {

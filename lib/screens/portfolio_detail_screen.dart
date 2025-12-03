@@ -224,7 +224,7 @@ class PortfolioDetailScreen extends StatelessWidget {
     if (imageUrl.startsWith('http')) {
       return CachedNetworkImage(
         imageUrl: imageUrl,
-        fit: BoxFit.cover,
+        fit: BoxFit.contain,
         placeholder: (context, url) => Container(
           color: Colors.grey.shade200,
           child: const Center(
@@ -258,7 +258,7 @@ class PortfolioDetailScreen extends StatelessWidget {
         final bytes = base64Decode(base64String);
         return Image.memory(
           bytes,
-          fit: BoxFit.cover,
+          fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) => _buildPlaceholderImage(index),
         );
       } catch (e) {
