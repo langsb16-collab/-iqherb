@@ -69,7 +69,7 @@ class DataService {
 │
 └── (부가) 응급 가이드 / QR 코드 문의 / 개발 문의''',
         languages: ['한국어', '영어', '중국어', '일본어'],
-        imageUrls: ['https://www.genspark.ai/api/files/s/CujsGulY'],
+        imageUrls: ['assets/images/projects/cashiq_brain_care.png'],
         order: 1,
       ),
       PortfolioItem(
@@ -97,7 +97,7 @@ class DataService {
 ├── 오라클 AI (Oracle AI)
 │    └─ AI 질문 답변 서비스''',
         languages: ['한국어', '영어', '중국어', '일본어', '베트남어', '아랍어'],
-        imageUrls: ['https://www.genspark.ai/api/files/s/OV0Fkql6'],
+        imageUrls: ['assets/images/projects/oracle_ai.png'],
         order: 2,
       ),
       PortfolioItem(
@@ -141,7 +141,7 @@ class DataService {
 │    ├─ 관광 명소 홍보
 │    └─ 기업·소상공인 지원사업 안내''',
         languages: ['한국어', '영어', '중국어', '일본어'],
-        imageUrls: ['https://www.genspark.ai/api/files/s/WwtqYsTX'],
+        imageUrls: ['assets/images/projects/jeolla_food.png'],
         order: 3,
       ),
       PortfolioItem(
@@ -179,7 +179,7 @@ class DataService {
 │    ├─ 인증 실패 사용자 경고
 │    └─ 안전 수칙 안내''',
         languages: ['한국어', '영어', '중국어', '일본어', '베트남어', '아랍어'],
-        imageUrls: ['https://www.genspark.ai/api/files/s/qphbuuRq'],
+        imageUrls: ['assets/images/projects/couple_gate.png'],
         order: 4,
       ),
       PortfolioItem(
@@ -215,7 +215,7 @@ class DataService {
 │    ├─ 심혈관/대사질환 경고
 │    └─ 맞춤형 건강 조언''',
         languages: ['한국어', '영어', '중국어', '일본어', '베트남어', '아랍어'],
-        imageUrls: ['https://www.genspark.ai/api/files/s/ekFQFdRN'],
+        imageUrls: ['assets/images/projects/puke365_food_ai.png'],
         order: 5,
       ),
       PortfolioItem(
@@ -254,7 +254,7 @@ class DataService {
 │    ├─ 성형 패키지
 │    └─ 맞춤 견적 요청''',
         languages: ['한국어', '영어', '중국어', '일본어', '베트남어', '아랍어'],
-        imageUrls: ['https://www.genspark.ai/api/files/s/KklelIox'],
+        imageUrls: ['assets/images/projects/medi_trip.png'],
         order: 6,
       ),
       PortfolioItem(
@@ -291,7 +291,7 @@ class DataService {
 │    ├─ 1:1 매칭 요청
 │    └─ 매칭 알림 받기''',
         languages: ['한국어', '영어', '중국어', '일본어', '베트남어', '아랍어', '태국어'],
-        imageUrls: ['https://www.genspark.ai/api/files/s/3wftPhkx'],
+        imageUrls: ['assets/images/projects/care_walk.png'],
         order: 7,
       ),
     ];

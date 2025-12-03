@@ -1,0 +1,9 @@
+name = "portfolio-manager"
+compatibility_date = "2025-12-03"
+pages_build_output_dir = "build/web"
+
+[site]
+bucket = "./build/web"
+
+[[assets]]
+directory = "./build/web"

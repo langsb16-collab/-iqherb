@@ -13,7 +13,7 @@ class AdminScreen extends StatefulWidget {
 class _AdminScreenState extends State<AdminScreen> {
   bool _isAuthenticated = false;
   final _passwordController = TextEditingController();
-  final String _adminPassword = 'admin123'; // Simple password for demo
+  final String _adminPassword = 'admin1234'; // Admin password
 
   @override
   void dispose() {
@@ -68,13 +68,17 @@ class _AdminScreenState extends State<AdminScreen> {
                       ),
                       onSubmitted: (_) => _authenticate(),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _authenticate,
                         style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+                          textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         child: const Text('로그인'),
                       ),
