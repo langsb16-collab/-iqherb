@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A new Flutter project.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="portfolio_manager">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Portfolio Manager</title>
+  <link rel="manifest" href="manifest.json">
+  
+  <script>
+    // Force cache clear on every page load
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        names.forEach(function(name) {
+          caches.delete(name);
+          console.log('🗑️ Cleared cache:', name);
+        });
+      });
+    }
+  </script>
+  
+  <script>
+    // Suppress browser extension errors (Port closed, Connection refused, CORS)
+    window.addEventListener('error', function(event) {
+      const message = event.message || '';
+      if (message.includes('Port closed') || 
+          message.includes('Connection refused') || 
+          message.includes('ERR_CONNECTION_REFUSED') ||
+          message.includes('CORS policy')) {
+        console.warn('⚠️ Browser extension error suppressed:', message);
+        event.preventDefault();
+        return true;
+      }
+    }, true);
+    
+    // Additional promise rejection handler for extension errors
+    window.addEventListener('unhandledrejection', function(event) {
+      const reason = event.reason ? event.reason.toString() : '';
+      if (reason.includes('Port closed') || 
+          reason.includes('Connection refused') ||
+          reason.includes('localhost')) {
+        console.warn('⚠️ Extension promise error suppressed');
+        event.preventDefault();
+      }
+    });
+  </script>
+</head>
+<body>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
+<!-- Force rebuild Thu Dec  4 06:52:00 UTC 2025 -->
