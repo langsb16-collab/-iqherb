@@ -59,13 +59,6 @@ class HomeScreen extends StatelessWidget {
             },
             tooltip: '회사소개',
           ),
-          IconButton(
-            icon: const Icon(Icons.admin_panel_settings),
-            onPressed: () {
-              Navigator.pushNamed(context, '/admin');
-            },
-            tooltip: '관리자',
-          ),
         ],
       ),
       body: Consumer<PortfolioProvider>(
@@ -197,25 +190,12 @@ class HomeScreen extends StatelessWidget {
                         style: TextStyle(color: Colors.grey),
                       ),
                       const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          TextButton.icon(
-                            icon: const Icon(Icons.info_outline, size: 18),
-                            label: const Text('회사소개'),
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/company-info');
-                            },
-                          ),
-                          const SizedBox(width: 16),
-                          TextButton.icon(
-                            icon: const Icon(Icons.admin_panel_settings, size: 18),
-                            label: const Text('관리자'),
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/admin');
-                            },
-                          ),
-                        ],
+                      TextButton.icon(
+                        icon: const Icon(Icons.info_outline, size: 18),
+                        label: const Text('회사소개'),
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/company-info');
+                        },
                       ),
                     ],
                   ),
