@@ -33,31 +33,6 @@
   <link rel="manifest" href="manifest.json">
   
   <script>
-    // PRIORITY 1: Suppress ALL Hive console logs IMMEDIATELY
-    (function() {
-      const originalLog = console.log;
-      const originalWarn = console.warn;
-      const originalError = console.error;
-      
-      console.log = function() {
-        const msg = Array.from(arguments).join(' ');
-        if (msg.includes('Got object store') || msg.includes('in database') || msg.includes('Hive')) return;
-        originalLog.apply(console, arguments);
-      };
-      console.warn = function() {
-        const msg = Array.from(arguments).join(' ');
-        if (msg.includes('object store') || msg.includes('Hive')) return;
-        originalWarn.apply(console, arguments);
-      };
-      console.error = function() {
-        const msg = Array.from(arguments).join(' ');
-        if (msg.includes('object store') || msg.includes('Hive')) return;
-        originalError.apply(console, arguments);
-      };
-    })();
-  </script>
-  
-  <script>
     // Force cache clear on every page load
     if ('caches' in window) {
       caches.keys().then(function(names) {
@@ -70,84 +45,6 @@
   </script>
   
   <script>
-    // CRITICAL: Completely block Hive IndexedDB on web platform
-    // This app uses SharedPreferences for web storage, not Hive
-    
-    // Block IndexedDB completely for Hive
-    (function() {
-      if (window.indexedDB) {
-        console.log('🚫 Blocking Hive IndexedDB access...');
-        
-        // Delete existing databases first
-        const hiveDbNames = ['portfolios', 'company', 'investment_notices', 'portfolios.hive', 'company.hive', 'investment_notices.hive'];
-        
-        hiveDbNames.forEach(function(dbName) {
-          try {
-            window.indexedDB.deleteDatabase(dbName);
-          } catch (e) {
-            // Suppress errors
-          }
-        });
-        
-        // Override indexedDB.open to block Hive database creation
-        const originalOpen = window.indexedDB.open.bind(window.indexedDB);
-        window.indexedDB.open = function(name, version) {
-          // Block Hive databases
-          if (hiveDbNames.includes(name) || name.includes('hive')) {
-            console.log('🚫 Blocked Hive IndexedDB open attempt:', name);
-            // Return a fake request that fails gracefully
-            const fakeRequest = {
-              onsuccess: null,
-              onerror: null,
-              onupgradeneeded: null,
-              result: null,
-              error: new Error('Hive IndexedDB blocked'),
-              addEventListener: function() {},
-              removeEventListener: function() {}
-            };
-            setTimeout(function() {
-              if (fakeRequest.onerror) {
-                fakeRequest.onerror({ target: fakeRequest });
-              }
-            }, 0);
-            return fakeRequest;
-          }
-          // Allow non-Hive databases
-          return originalOpen(name, version);
-        };
-        
-        console.log('✅ Hive IndexedDB blocked. Using SharedPreferences for web storage.');
-      }
-    })();
-    
-    // Manual cleanup utility
-    window.clearHiveDatabase = function() {
-      if (window.indexedDB) {
-        const dbNames = ['portfolios', 'company', 'investment_notices', 'portfolios.hive', 'company.hive', 'investment_notices.hive'];
-        dbNames.forEach(function(dbName) {
-          window.indexedDB.deleteDatabase(dbName);
-        });
-        console.log('✅ IndexedDB cleared manually. Please refresh the page.');
-        location.reload();
-      }
-    };
-    
-    // Suppress Hive-related errors
-    window.addEventListener('error', function(event) {
-      if (event.message && (event.message.includes('object store') || event.message.includes('database'))) {
-        event.preventDefault();
-        return true;
-      }
-    });
-    
-    // Suppress unhandled promise rejections related to Hive
-    window.addEventListener('unhandledrejection', function(event) {
-      if (event.reason && event.reason.toString().includes('object store')) {
-        console.warn('⚠️ Hive IndexedDB promise rejection suppressed');
-        event.preventDefault();
-      }
-    });
-    
     // Suppress browser extension errors (Port closed, Connection refused, CORS)
     window.addEventListener('error', function(event) {
       const message = event.message || '';
