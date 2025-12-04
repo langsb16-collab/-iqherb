@@ -33,6 +33,31 @@
   <link rel="manifest" href="manifest.json">
   
   <script>
+    // PRIORITY 1: Suppress ALL Hive console logs IMMEDIATELY
+    (function() {
+      const originalLog = console.log;
+      const originalWarn = console.warn;
+      const originalError = console.error;
+      
+      console.log = function() {
+        const msg = Array.from(arguments).join(' ');
+        if (msg.includes('Got object store') || msg.includes('in database') || msg.includes('Hive')) return;
+        originalLog.apply(console, arguments);
+      };
+      console.warn = function() {
+        const msg = Array.from(arguments).join(' ');
+        if (msg.includes('object store') || msg.includes('Hive')) return;
+        originalWarn.apply(console, arguments);
+      };
+      console.error = function() {
+        const msg = Array.from(arguments).join(' ');
+        if (msg.includes('object store') || msg.includes('Hive')) return;
+        originalError.apply(console, arguments);
+      };
+    })();
+  </script>
+  
+  <script>
     // Force cache clear on every page load
     if ('caches' in window) {
       caches.keys().then(function(names) {
@@ -107,27 +132,13 @@
       }
     };
     
-    // Suppress Hive-related errors and console logs
+    // Suppress Hive-related errors
     window.addEventListener('error', function(event) {
       if (event.message && (event.message.includes('object store') || event.message.includes('database'))) {
         event.preventDefault();
         return true;
       }
     });
-    
-    // Suppress "Got object store box" console logs
-    const originalConsoleLog = console.log;
-    console.log = function() {
-      const message = Array.from(arguments).join(' ');
-      if (message.includes('Got object store box') || 
-          message.includes('database portfolios') ||
-          message.includes('database company') ||
-          message.includes('database investment_notices')) {
-        // Suppress Hive-related logs
-        return;
-      }
-      originalConsoleLog.apply(console, arguments);
-    };
     
     // Suppress unhandled promise rejections related to Hive
     window.addEventListener('unhandledrejection', function(event) {
