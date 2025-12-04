@@ -106,7 +106,7 @@ class PortfolioDetailScreen extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
-                              color: Colors.black,
+                              color: Colors.red,
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(

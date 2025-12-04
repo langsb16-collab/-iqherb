@@ -293,7 +293,7 @@ class HomeScreen extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: Colors.black,
+                              color: Colors.red,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Text(
@@ -354,6 +354,47 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildThumbnailImage(PortfolioItem portfolio) {
+    // 유튜브 링크가 있으면 썸네일 표시 (우선순위 1)
+    if (portfolio.youtubeLinks.isNotEmpty) {
+      final youtubeUrl = portfolio.youtubeLinks.first;
+      String? videoId = _extractYoutubeVideoId(youtubeUrl);
+      
+      if (videoId != null) {
+        final thumbnailUrl = 'https://img.youtube.com/vi/$videoId/hqdefault.jpg';
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            CachedNetworkImage(
+              imageUrl: thumbnailUrl,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                color: Colors.grey.shade200,
+                child: const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              errorWidget: (context, url, error) => _buildPlaceholderImage(portfolio),
+            ),
+            // 유튜브 플레이 버튼 오버레이
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.9),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.play_arrow,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+            ),
+          ],
+        );
+      }
+    }
+    
     if (portfolio.imageUrls.isEmpty) {
       return _buildPlaceholderImage(portfolio);
     }
@@ -438,5 +479,17 @@ class HomeScreen extends StatelessWidget {
       Icons.accessible,
     ];
     return icons[(order - 1) % icons.length];
+  }
+
+  // 유튜브 비디오 ID 추출 함수
+  String? _extractYoutubeVideoId(String url) {
+    // https://www.youtube.com/watch?v=VIDEO_ID
+    // https://youtu.be/VIDEO_ID
+    final regExp = RegExp(
+      r'(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})',
+      caseSensitive: false,
+    );
+    final match = regExp.firstMatch(url);
+    return match?.group(1);
   }
 }
