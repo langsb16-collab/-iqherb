@@ -1,0 +1,8 @@
+{
+  "framework": "static",
+  "build": {
+    "command": "",
+    "output_directory": ".",
+    "root_directory": "/"
+  }
+}
