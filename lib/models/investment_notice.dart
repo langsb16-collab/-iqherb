@@ -1,34 +1,12 @@
-import 'package:hive/hive.dart';
-
-part 'investment_notice.g.dart';
-
-@HiveType(typeId: 2)
-class InvestmentNotice extends HiveObject {
-  @HiveField(0)
+class InvestmentNotice {
   String id;
-
-  @HiveField(1)
   String title;
-
-  @HiveField(2)
   String content;
-
-  @HiveField(3)
   List<String> imageUrls;
-
-  @HiveField(4)
   List<String> videoUrls;
-
-  @HiveField(5)
   List<String> youtubeLinks;
-
-  @HiveField(6)
   DateTime createdAt;
-
-  @HiveField(7)
   DateTime updatedAt;
-
-  @HiveField(8)
   bool isActive;
 
   InvestmentNotice({

@@ -446,7 +446,6 @@ class _AdminScreenState extends State<AdminScreen> {
                                       child: InkWell(
                                         onTap: () {
                                           setDialogState(() {
-                                            // uploadedImagePaths만 관리 (uploadedImageBytes는 미리보기용이므로 제거)
                                             uploadedImagePaths.removeAt(i);
                                           });
                                         },
@@ -490,25 +489,140 @@ class _AdminScreenState extends State<AdminScreen> {
                   maxLines: 3,
                 ),
                 const SizedBox(height: 12),
-                // 카테고리 선택
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                // Category and Amount fields
+                Row(
                   children: [
-                    const Text(
-                      '카테고리 선택',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: selectedCategory,
+                        decoration: const InputDecoration(
+                          labelText: '카테고리',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: null, child: Text('없음')),
+                          DropdownMenuItem(value: '투자', child: Text('투자')),
+                          DropdownMenuItem(value: '대출', child: Text('대출')),
+                          DropdownMenuItem(value: '수익분배', child: Text('수익분배')),
+                        ],
+                        onChanged: (value) {
+                          setDialogState(() {
+                            selectedCategory = value;
+                          });
+                        },
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade400),
-                        borderRadius: BorderRadius.circular(8),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: amountController,
+                        decoration: const InputDecoration(
+                          labelText: '금액 (만원)',
+                          border: OutlineInputBorder(),
+                          hintText: '예: 5000',
+                        ),
+                        keyboardType: TextInputType.number,
                       ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          value: s
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: orderController,
+                  decoration: const InputDecoration(
+                    labelText: '순서 *',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+            ),
+          ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('취소'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final title = titleController.text.trim();
+                final subtitle = subtitleController.text.trim();
+                final description = descriptionController.text.trim();
+                final siteMap = siteMapController.text.trim();
+                final languages = languagesController.text
+                    .split(',')
+                    .map((e) => e.trim())
+                    .where((e) => e.isNotEmpty)
+                    .toList();
+                final youtubeLinks = youtubeLinksController.text
+                    .split('\n')
+                    .map((e) => e.trim())
+                    .where((e) => e.isNotEmpty)
+                    .toList();
+                final order = int.tryParse(orderController.text) ?? provider.portfolios.length + 1;
+                final amount = int.tryParse(amountController.text);
+
+                if (title.isEmpty || subtitle.isEmpty || description.isEmpty || siteMap.isEmpty || languages.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('필수 항목을 모두 입력해주세요')),
+                  );
+                  return;
+                }
+
+                final newItem = PortfolioItem(
+                  id: portfolio?.id ?? 'portfolio_${DateTime.now().millisecondsSinceEpoch}',
+                  title: title,
+                  subtitle: subtitle,
+                  description: description,
+                  siteMap: siteMap,
+                  languages: languages,
+                  imageUrls: uploadedImagePaths,
+                  youtubeLinks: youtubeLinks,
+                  order: order,
+                  createdAt: portfolio?.createdAt,
+                  updatedAt: DateTime.now(),
+                  category: selectedCategory,
+                  amount: amount,
+                );
+
+                if (isEdit) {
+                  provider.updatePortfolio(index, newItem);
+                } else {
+                  provider.addPortfolio(newItem);
+                }
+
+                Navigator.pop(context);
+              },
+              child: Text(isEdit ? '수정' : '추가'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context, int index) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('프로젝트 삭제'),
+        content: const Text('정말로 이 프로젝트를 삭제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Provider.of<PortfolioProvider>(context, listen: false).deletePortfolio(index);
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+  }
+}

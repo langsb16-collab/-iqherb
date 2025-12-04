@@ -1,46 +1,16 @@
-import 'package:hive/hive.dart';
-
-part 'portfolio_item.g.dart';
-
-@HiveType(typeId: 0)
-class PortfolioItem extends HiveObject {
-  @HiveField(0)
+class PortfolioItem {
   String id;
-
-  @HiveField(1)
   String title;
-
-  @HiveField(2)
   String subtitle;
-
-  @HiveField(3)
   String description;
-
-  @HiveField(4)
   String siteMap;
-
-  @HiveField(5)
   List<String> languages;
-
-  @HiveField(6)
   List<String> imageUrls;
-
-  @HiveField(7)
   List<String> youtubeLinks;
-
-  @HiveField(8)
   int order;
-
-  @HiveField(9)
   DateTime createdAt;
-
-  @HiveField(10)
   DateTime updatedAt;
-
-  @HiveField(11)
   String? category; // 투자, 대출, 수익분배
-
-  @HiveField(12)
   int? amount; // 금액 (단위: 만원)
 
   PortfolioItem({

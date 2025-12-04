@@ -1,37 +1,13 @@
-import 'package:hive/hive.dart';
-
-part 'company_info.g.dart';
-
-@HiveType(typeId: 1)
-class CompanyInfo extends HiveObject {
-  @HiveField(0)
+class CompanyInfo {
   String id;
-
-  @HiveField(1)
   String companyName;
-
-  @HiveField(2)
   String description;
-
-  @HiveField(3)
   List<String> teamMembers;
-
-  @HiveField(4)
   List<String> developmentScope;
-
-  @HiveField(5)
   String youtubeLink;
-
-  @HiveField(6)
   String contactTelegram;
-
-  @HiveField(7)
   String contactEmail;
-
-  @HiveField(8)
   List<String> imageUrls;
-
-  @HiveField(9)
   DateTime updatedAt;
 
   CompanyInfo({
