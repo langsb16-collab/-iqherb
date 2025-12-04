@@ -3,7 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:typed_data';
 import '../models/investment_notice.dart';
-import '../services/data_service.dart';
+import '../services/data_service_web.dart';
 
 class AdminInvestmentNoticeScreen extends StatefulWidget {
   const AdminInvestmentNoticeScreen({super.key});
@@ -23,7 +23,7 @@ class _AdminInvestmentNoticeScreenState extends State<AdminInvestmentNoticeScree
 
   void _loadNotices() {
     setState(() {
-      _notices = DataService.getAllInvestmentNotices();
+      _notices = DataServiceWeb.getAllInvestmentNotices();
     });
   }
 
@@ -392,9 +392,9 @@ class _AdminInvestmentNoticeScreenState extends State<AdminInvestmentNoticeScree
                 );
 
                 if (isEdit && index != null) {
-                  await DataService.updateInvestmentNotice(index, newNotice);
+                  await DataServiceWeb.updateInvestmentNotice(index, newNotice);
                 } else {
-                  await DataService.addInvestmentNotice(newNotice);
+                  await DataServiceWeb.addInvestmentNotice(newNotice);
                 }
 
                 _loadNotices();
@@ -428,7 +428,7 @@ class _AdminInvestmentNoticeScreenState extends State<AdminInvestmentNoticeScree
           ),
           ElevatedButton(
             onPressed: () async {
-              await DataService.deleteInvestmentNotice(index);
+              await DataServiceWeb.deleteInvestmentNotice(index);
               _loadNotices();
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(

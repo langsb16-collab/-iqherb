@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/portfolio_item.dart';
 import '../models/company_info.dart';
-import '../services/data_service.dart';
+import '../services/data_service_web.dart';
 
 class PortfolioProvider extends ChangeNotifier {
   List<PortfolioItem> _portfolios = [];
@@ -15,32 +15,32 @@ class PortfolioProvider extends ChangeNotifier {
   }
 
   Future<void> loadData() async {
-    _portfolios = DataService.getAllPortfolios();
-    _companyInfo = DataService.getCompanyInfo();
+    _portfolios = DataServiceWeb.getAllPortfolios();
+    _companyInfo = DataServiceWeb.getCompanyInfo();
     notifyListeners();
   }
 
   Future<void> addPortfolio(PortfolioItem item) async {
-    await DataService.addPortfolio(item);
+    await DataServiceWeb.addPortfolio(item);
     await loadData();
   }
 
   Future<void> updatePortfolio(int index, PortfolioItem item) async {
-    await DataService.updatePortfolio(index, item);
+    await DataServiceWeb.updatePortfolio(index, item);
     await loadData();
   }
 
   Future<void> deletePortfolio(int index) async {
-    await DataService.deletePortfolio(index);
+    await DataServiceWeb.deletePortfolio(index);
     await loadData();
   }
 
   Future<void> updateCompanyInfo(CompanyInfo info) async {
-    await DataService.updateCompanyInfo(info);
+    await DataServiceWeb.updateCompanyInfo(info);
     await loadData();
   }
 
   PortfolioItem? getPortfolioById(String id) {
-    return DataService.getPortfolioById(id);
+    return DataServiceWeb.getPortfolioById(id);
   }
 }

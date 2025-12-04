@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/portfolio_provider.dart';
 import '../models/portfolio_item.dart';
-import '../services/data_service.dart';
+import '../services/data_service_web.dart';
 import 'investment_notice_screen.dart';
 import 'dart:convert';
 
@@ -25,7 +25,7 @@ class HomeScreen extends StatelessWidget {
             margin: const EdgeInsets.only(right: 8),
             child: ElevatedButton.icon(
               onPressed: () {
-                final notice = DataService.getInvestmentNotice();
+                final notice = DataServiceWeb.getInvestmentNotice();
                 if (notice != null) {
                   Navigator.push(
                     context,

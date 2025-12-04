@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'services/data_service.dart';
+import 'services/data_service_web.dart';
 import 'screens/home_screen.dart';
 import 'screens/portfolio_detail_screen.dart';
 import 'screens/company_info_screen.dart';
@@ -11,11 +11,13 @@ import 'providers/portfolio_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize database (platform-aware)
+  // Initialize database - WEB ONLY (NO Hive, NO IndexedDB)
   try {
-    await DataService.initialize();
+    debugPrint('🌐 Initializing DataServiceWeb (SharedPreferences only)');
+    await DataServiceWeb.initialize();
+    debugPrint('✅ DataServiceWeb initialized - NO Hive/IndexedDB');
   } catch (e) {
-    debugPrint('⚠️ Database initialization failed, continuing with fallback: $e');
+    debugPrint('⚠️ Database initialization failed: $e');
   }
   
   runApp(const MyApp());
