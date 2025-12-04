@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:lottie/lottie.dart';
 import '../providers/portfolio_provider.dart';
 import '../models/portfolio_item.dart';
 import '../services/data_service_web.dart';
@@ -78,7 +79,7 @@ class HomeScreen extends StatelessWidget {
           return SingleChildScrollView(
             child: Column(
               children: [
-                // Header Section
+                // Header Section with Lottie Animation
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(32),
@@ -94,10 +95,22 @@ class HomeScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      const Icon(
-                        Icons.work_outline,
-                        size: 64,
-                        color: Colors.white,
+                      // Lottie Animation Hero Section
+                      SizedBox(
+                        width: 520,
+                        height: 400,
+                        child: Lottie.network(
+                          '/lottie/laptop-graph-hero.json',
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            // Fallback to icon if Lottie fails to load
+                            return const Icon(
+                              Icons.work_outline,
+                              size: 64,
+                              color: Colors.white,
+                            );
+                          },
+                        ),
                       ),
                       const SizedBox(height: 16),
                       const Text(
