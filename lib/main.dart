@@ -6,6 +6,7 @@ import 'screens/home_screen.dart';
 import 'screens/portfolio_detail_screen.dart';
 import 'screens/company_info_screen.dart';
 import 'screens/admin_screen.dart';
+import 'screens/admin222_screen.dart';
 import 'providers/portfolio_provider.dart';
 
 void main() async {
@@ -16,6 +17,10 @@ void main() async {
     debugPrint('🌐 Initializing DataServiceWeb (SharedPreferences only)');
     await DataServiceWeb.initialize();
     debugPrint('✅ DataServiceWeb initialized - NO Hive/IndexedDB');
+    
+    // Add delay to ensure data is ready
+    await Future.delayed(const Duration(milliseconds: 500));
+    debugPrint('✅ Data initialization complete');
   } catch (e) {
     debugPrint('⚠️ Database initialization failed: $e');
   }
@@ -46,12 +51,12 @@ class MyApp extends StatelessWidget {
             ),
           ),
         ),
-        initialRoute: '/',
         routes: {
           '/': (context) => const HomeScreen(),
+          '/admin': (context) => const AdminScreen(),
+          '/admin222': (context) => const Admin222Screen(),
           '/portfolio-detail': (context) => const PortfolioDetailScreen(),
           '/company-info': (context) => const CompanyInfoScreen(),
-          '/admin': (context) => const AdminScreen(),
         },
       ),
     );

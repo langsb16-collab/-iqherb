@@ -11,33 +11,63 @@ class PortfolioProvider extends ChangeNotifier {
   CompanyInfo? get companyInfo => _companyInfo;
 
   PortfolioProvider() {
-    loadData();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    // Wait for a moment to ensure DataServiceWeb is fully initialized
+    await Future.delayed(const Duration(milliseconds: 100));
+    await loadData();
   }
 
   Future<void> loadData() async {
     debugPrint('🔄 PortfolioProvider: Loading data...');
-    _portfolios = DataServiceWeb.getAllPortfolios();
-    _companyInfo = DataServiceWeb.getCompanyInfo();
-    debugPrint('✅ PortfolioProvider: Loaded ${_portfolios.length} portfolios');
-    notifyListeners();
-    debugPrint('✅ PortfolioProvider: Listeners notified');
+    
+    try {
+      _portfolios = DataServiceWeb.getAllPortfolios();
+      _companyInfo = DataServiceWeb.getCompanyInfo();
+      
+      debugPrint('✅ PortfolioProvider: Loaded ${_portfolios.length} portfolios');
+      
+      if (_portfolios.isEmpty) {
+        debugPrint('⚠️ PortfolioProvider: No portfolios found, may need initialization');
+      }
+      
+      notifyListeners();
+      debugPrint('✅ PortfolioProvider: Listeners notified');
+    } catch (e) {
+      debugPrint('❌ PortfolioProvider: Error loading data: $e');
+    }
   }
 
   Future<void> addPortfolio(PortfolioItem item) async {
     debugPrint('➕ PortfolioProvider: Adding portfolio "${item.title}"');
     await DataServiceWeb.addPortfolio(item);
-    debugPrint('🔄 PortfolioProvider: Reloading data after add...');
-    await loadData();
+    _portfolios.add(item);
+    _portfolios.sort((a, b) => a.order.compareTo(b.order));
+    notifyListeners();
+    debugPrint('✅ PortfolioProvider: Portfolio added and listeners notified');
   }
 
   Future<void> updatePortfolio(int index, PortfolioItem item) async {
+    debugPrint('✏️ PortfolioProvider: Updating portfolio at index $index');
     await DataServiceWeb.updatePortfolio(index, item);
-    await loadData();
+    if (index >= 0 && index < _portfolios.length) {
+      _portfolios[index] = item;
+      _portfolios.sort((a, b) => a.order.compareTo(b.order));
+      notifyListeners();
+      debugPrint('✅ PortfolioProvider: Portfolio updated and listeners notified');
+    }
   }
 
   Future<void> deletePortfolio(int index) async {
+    debugPrint('🗑️ PortfolioProvider: Deleting portfolio at index $index');
     await DataServiceWeb.deletePortfolio(index);
-    await loadData();
+    if (index >= 0 && index < _portfolios.length) {
+      _portfolios.removeAt(index);
+      notifyListeners();
+      debugPrint('✅ PortfolioProvider: Portfolio deleted and listeners notified');
+    }
   }
 
   Future<void> updateCompanyInfo(CompanyInfo info) async {

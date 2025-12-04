@@ -183,19 +183,41 @@ class HomeScreen extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
                   color: Colors.grey.shade100,
-                  child: Column(
+                  child: Stack(
                     children: [
-                      const Text(
-                        '© 2024 Portfolio Manager',
-                        style: TextStyle(color: Colors.grey),
+                      Column(
+                        children: [
+                          const Text(
+                            '© 2024 Portfolio Manager',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton.icon(
+                            icon: const Icon(Icons.info_outline, size: 18),
+                            label: const Text('회사소개'),
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/company-info');
+                            },
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      TextButton.icon(
-                        icon: const Icon(Icons.info_outline, size: 18),
-                        label: const Text('회사소개'),
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/company-info');
-                        },
+                      // 숨겨진 관리자 버튼 (오른쪽 하단)
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.pushNamed(context, '/admin222');
+                          },
+                          child: Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
