@@ -33,6 +33,18 @@
   <link rel="manifest" href="manifest.json">
   
   <script>
+    // Force cache clear on every page load
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        names.forEach(function(name) {
+          caches.delete(name);
+          console.log('🗑️ Cleared cache:', name);
+        });
+      });
+    }
+  </script>
+  
+  <script>
     // CRITICAL: Prevent Hive IndexedDB initialization on web
     // This app uses SharedPreferences for web storage, not Hive
     
