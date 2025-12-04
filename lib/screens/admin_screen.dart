@@ -18,7 +18,7 @@ class AdminScreen extends StatefulWidget {
 class _AdminScreenState extends State<AdminScreen> {
   bool _isAuthenticated = false;
   final _passwordController = TextEditingController();
-  final String _adminPassword = 'admin1234'; // Admin password
+  final String _adminPassword = 'admin!@#$'; // Admin password
 
   @override
   void dispose() {
@@ -27,10 +27,10 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 
   void _authenticate() {
-    // 입력값에서 모든 공백과 특수문자 제거 후 소문자 변환
+    // 입력값에서 공백만 제거 (특수문자는 유지)
     final inputText = _passwordController.text;
-    final cleanedInput = inputText.replaceAll(RegExp(r'\s+'), '').toLowerCase();
-    final correctPassword = 'admin1234';
+    final cleanedInput = inputText.replaceAll(RegExp(r'\s+'), '');
+    final correctPassword = 'admin!@#$';
     
     // 디버그 출력 (개발자 콘솔에서 확인 가능)
     if (kDebugMode) {
@@ -113,10 +113,10 @@ class _AdminScreenState extends State<AdminScreen> {
                     children: [
                       Text('입력값: "$cleanedInput" (${cleanedInput.length}자)'),
                       const SizedBox(height: 4),
-                      const Text('정답: "admin1234" (9자)'),
+                      const Text('정답: "admin!@#$" (9자)'),
                       const SizedBox(height: 8),
                       const Text(
-                        '💡 정확히 "admin1234"를 입력해주세요',
+                        '💡 정확히 "admin!@#$"를 입력해주세요',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -171,7 +171,7 @@ class _AdminScreenState extends State<AdminScreen> {
                           Icon(Icons.info_outline, size: 20, color: Colors.green),
                           SizedBox(width: 8),
                           Text(
-                            '비밀번호: admin1234',
+                            '비밀번호: admin!@#\$',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -750,154 +750,4 @@ class _AdminScreenState extends State<AdminScreen> {
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           isExpanded: true,
-                          value: selectedCategory,
-                          hint: const Text('카테고리를 선택하세요'),
-                          items: const [
-                            DropdownMenuItem(value: '투자', child: Text('투자')),
-                            DropdownMenuItem(value: '대출', child: Text('대출')),
-                            DropdownMenuItem(value: '수익분배', child: Text('수익분배')),
-                          ],
-                          onChanged: (value) {
-                            setDialogState(() {
-                              selectedCategory = value;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                // 금액 입력
-                TextField(
-                  controller: amountController,
-                  decoration: const InputDecoration(
-                    labelText: '금액 (단위: 만원)',
-                    border: OutlineInputBorder(),
-                    hintText: '예: 1000 (1000만원)',
-                    prefixIcon: Icon(Icons.attach_money),
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: orderController,
-                  decoration: const InputDecoration(
-                    labelText: '순서 *',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (titleController.text.isEmpty ||
-                  subtitleController.text.isEmpty ||
-                  descriptionController.text.isEmpty ||
-                  siteMapController.text.isEmpty ||
-                  languagesController.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('필수 항목을 모두 입력해주세요.')),
-                );
-                return;
-              }
-
-              final newPortfolio = PortfolioItem(
-                id: portfolio?.id ?? 'portfolio_${DateTime.now().millisecondsSinceEpoch}',
-                title: titleController.text,
-                subtitle: subtitleController.text,
-                description: descriptionController.text,
-                siteMap: siteMapController.text,
-                languages: languagesController.text.split(',').map((e) => e.trim()).toList(),
-                imageUrls: uploadedImagePaths,
-                youtubeLinks: youtubeLinksController.text.isEmpty
-                    ? []
-                    : youtubeLinksController.text.split('\n').where((e) => e.trim().isNotEmpty).toList(),
-                order: int.tryParse(orderController.text) ?? 1,
-                category: selectedCategory,
-                amount: amountController.text.isEmpty ? null : int.tryParse(amountController.text),
-              );
-
-              if (kDebugMode) {
-                debugPrint('📝 프로젝트 저장: ${newPortfolio.title}');
-                debugPrint('🖼️  이미지 개수: ${uploadedImagePaths.length}');
-                for (var i = 0; i < uploadedImagePaths.length; i++) {
-                  final path = uploadedImagePaths[i];
-                  final type = path.startsWith('data:image') ? 'Base64' : 
-                               path.startsWith('http') ? 'HTTP URL' : 'Local';
-                  final size = path.startsWith('data:image') 
-                      ? '${(path.length / 1024).toStringAsFixed(1)} KB' 
-                      : '';
-                  debugPrint('  [$i] $type $size');
-                }
-              }
-
-              if (isEdit) {
-                provider.updatePortfolio(index, newPortfolio);
-              } else {
-                provider.addPortfolio(newPortfolio);
-              }
-
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      const Icon(Icons.check_circle, color: Colors.white),
-                      const SizedBox(width: 8),
-                      Text(isEdit ? '✅ 프로젝트가 수정되었습니다.' : '✅ 프로젝트가 추가되었습니다.'),
-                    ],
-                  ),
-                  backgroundColor: Colors.green,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            },
-            child: Text(isEdit ? '수정' : '추가'),
-          ),
-        ],
-        ),
-      ),
-    );
-  }
-
-  void _showDeleteDialog(BuildContext context, int index) {
-    final provider = Provider.of<PortfolioProvider>(context, listen: false);
-    final portfolio = provider.portfolios[index];
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('프로젝트 삭제'),
-        content: Text('${portfolio.title} 프로젝트를 삭제하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              provider.deletePortfolio(index);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('프로젝트가 삭제되었습니다.')),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('삭제'),
-          ),
-        ],
-      ),
-    );
-  }
-}
+                          value: s
