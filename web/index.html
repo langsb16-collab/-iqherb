@@ -45,30 +45,53 @@
   </script>
   
   <script>
-    // CRITICAL: Prevent Hive IndexedDB initialization on web
+    // CRITICAL: Completely block Hive IndexedDB on web platform
     // This app uses SharedPreferences for web storage, not Hive
     
-    // Immediately delete any existing Hive databases on page load
+    // Block IndexedDB completely for Hive
     (function() {
       if (window.indexedDB) {
-        console.log('🧹 Cleaning up Hive IndexedDB databases...');
+        console.log('🚫 Blocking Hive IndexedDB access...');
+        
+        // Delete existing databases first
         const hiveDbNames = ['portfolios', 'company', 'investment_notices', 'portfolios.hive', 'company.hive', 'investment_notices.hive'];
         
         hiveDbNames.forEach(function(dbName) {
           try {
-            const deleteRequest = window.indexedDB.deleteDatabase(dbName);
-            deleteRequest.onsuccess = function() {
-              console.log('✅ Deleted IndexedDB:', dbName);
-            };
-            deleteRequest.onerror = function() {
-              console.log('⚠️ Could not delete IndexedDB:', dbName);
-            };
+            window.indexedDB.deleteDatabase(dbName);
           } catch (e) {
-            console.log('⚠️ Error deleting IndexedDB:', dbName, e);
+            // Suppress errors
           }
         });
         
-        console.log('✅ IndexedDB cleanup complete. Using SharedPreferences for web storage.');
+        // Override indexedDB.open to block Hive database creation
+        const originalOpen = window.indexedDB.open.bind(window.indexedDB);
+        window.indexedDB.open = function(name, version) {
+          // Block Hive databases
+          if (hiveDbNames.includes(name) || name.includes('hive')) {
+            console.log('🚫 Blocked Hive IndexedDB open attempt:', name);
+            // Return a fake request that fails gracefully
+            const fakeRequest = {
+              onsuccess: null,
+              onerror: null,
+              onupgradeneeded: null,
+              result: null,
+              error: new Error('Hive IndexedDB blocked'),
+              addEventListener: function() {},
+              removeEventListener: function() {}
+            };
+            setTimeout(function() {
+              if (fakeRequest.onerror) {
+                fakeRequest.onerror({ target: fakeRequest });
+              }
+            }, 0);
+            return fakeRequest;
+          }
+          // Allow non-Hive databases
+          return originalOpen(name, version);
+        };
+        
+        console.log('✅ Hive IndexedDB blocked. Using SharedPreferences for web storage.');
       }
     })();
     
@@ -84,13 +107,27 @@
       }
     };
     
-    // Suppress Hive-related errors
+    // Suppress Hive-related errors and console logs
     window.addEventListener('error', function(event) {
       if (event.message && (event.message.includes('object store') || event.message.includes('database'))) {
-        console.warn('⚠️ Hive IndexedDB error suppressed (using SharedPreferences instead)');
         event.preventDefault();
+        return true;
       }
     });
+    
+    // Suppress "Got object store box" console logs
+    const originalConsoleLog = console.log;
+    console.log = function() {
+      const message = Array.from(arguments).join(' ');
+      if (message.includes('Got object store box') || 
+          message.includes('database portfolios') ||
+          message.includes('database company') ||
+          message.includes('database investment_notices')) {
+        // Suppress Hive-related logs
+        return;
+      }
+      originalConsoleLog.apply(console, arguments);
+    };
     
     // Suppress unhandled promise rejections related to Hive
     window.addEventListener('unhandledrejection', function(event) {
