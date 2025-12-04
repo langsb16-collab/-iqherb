@@ -79,10 +79,13 @@ class HomeScreen extends StatelessWidget {
           return SingleChildScrollView(
             child: Column(
               children: [
-                // Header Section with Lottie Animation
+                // Header Section with Lottie Animation (70% 축소 + 모바일 최적화)
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(32),
+                  padding: EdgeInsets.symmetric(
+                    vertical: MediaQuery.of(context).size.width < 600 ? 16 : 24,
+                    horizontal: MediaQuery.of(context).size.width < 600 ? 16 : 32,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -95,37 +98,50 @@ class HomeScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      // Lottie Animation Hero Section
-                      SizedBox(
-                        width: 520,
-                        height: 400,
-                        child: Lottie.network(
-                          '/lottie/laptop-graph-hero.json',
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            // Fallback to icon if Lottie fails to load
-                            return const Icon(
-                              Icons.work_outline,
-                              size: 64,
-                              color: Colors.white,
-                            );
-                          },
-                        ),
+                      // Lottie Animation Hero Section (70% 축소)
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          // 모바일: 화면 폭의 80%, 데스크톱: 364px (520 * 0.7)
+                          final isMobile = MediaQuery.of(context).size.width < 600;
+                          final animWidth = isMobile 
+                              ? MediaQuery.of(context).size.width * 0.8 
+                              : 364.0; // 520 * 0.7
+                          final animHeight = isMobile 
+                              ? animWidth * 0.75 // 모바일 비율 유지
+                              : 280.0; // 400 * 0.7
+                          
+                          return SizedBox(
+                            width: animWidth,
+                            height: animHeight,
+                            child: Lottie.network(
+                              '/lottie/laptop-graph-hero.json',
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                // Fallback to icon if Lottie fails to load
+                                return Icon(
+                                  Icons.work_outline,
+                                  size: isMobile ? 48 : 64,
+                                  color: Colors.white,
+                                );
+                              },
+                            ),
+                          );
+                        },
                       ),
-                      const SizedBox(height: 16),
-                      const Text(
+                      SizedBox(height: MediaQuery.of(context).size.width < 600 ? 12 : 16),
+                      Text(
                         '포트폴리오',
                         style: TextStyle(
-                          fontSize: 32,
+                          fontSize: MediaQuery.of(context).size.width < 600 ? 24 : 28,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: MediaQuery.of(context).size.width < 600 ? 4 : 8),
                       Text(
                         '${provider.portfolios.length}개의 프로젝트',
-                        style: const TextStyle(
-                          fontSize: 18,
+                        style: TextStyle(
+                          fontSize: MediaQuery.of(context).size.width < 600 ? 14 : 16,
                           color: Colors.white70,
                         ),
                       ),
