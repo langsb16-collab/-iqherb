@@ -99,6 +99,30 @@
         event.preventDefault();
       }
     });
+    
+    // Suppress browser extension errors (Port closed, Connection refused, CORS)
+    window.addEventListener('error', function(event) {
+      const message = event.message || '';
+      if (message.includes('Port closed') || 
+          message.includes('Connection refused') || 
+          message.includes('ERR_CONNECTION_REFUSED') ||
+          message.includes('CORS policy')) {
+        console.warn('⚠️ Browser extension error suppressed:', message);
+        event.preventDefault();
+        return true;
+      }
+    }, true);
+    
+    // Additional promise rejection handler for extension errors
+    window.addEventListener('unhandledrejection', function(event) {
+      const reason = event.reason ? event.reason.toString() : '';
+      if (reason.includes('Port closed') || 
+          reason.includes('Connection refused') ||
+          reason.includes('localhost')) {
+        console.warn('⚠️ Extension promise error suppressed');
+        event.preventDefault();
+      }
+    });
   </script>
 </head>
 <body>
