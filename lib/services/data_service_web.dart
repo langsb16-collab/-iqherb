@@ -46,14 +46,22 @@ class DataServiceWeb {
 
   // ==================== Portfolio Operations ====================
   static List<PortfolioItem> getAllPortfolios() {
-    if (_prefs == null) return [];
+    if (_prefs == null) {
+      debugPrint('⚠️ getAllPortfolios: SharedPreferences not initialized');
+      return [];
+    }
     final String? data = _prefs!.getString('portfolios');
-    if (data == null) return [];
+    if (data == null) {
+      debugPrint('⚠️ getAllPortfolios: No data found in storage');
+      return [];
+    }
     
     try {
+      debugPrint('📖 Loading portfolios from storage (${data.length} bytes)');
       final List<dynamic> jsonList = json.decode(data);
       final portfolios = jsonList.map((json) => PortfolioItem.fromJson(json)).toList();
       portfolios.sort((a, b) => a.order.compareTo(b.order));
+      debugPrint('✅ Loaded ${portfolios.length} portfolios');
       return portfolios;
     } catch (e) {
       debugPrint('❌ Failed to decode portfolios: $e');
@@ -71,9 +79,13 @@ class DataServiceWeb {
   }
 
   static Future<void> addPortfolio(PortfolioItem item) async {
+    debugPrint('📝 Adding portfolio: ${item.title}');
     final portfolios = getAllPortfolios();
+    debugPrint('📊 Current portfolios count: ${portfolios.length}');
     portfolios.add(item);
+    debugPrint('📊 New portfolios count: ${portfolios.length}');
     await _savePortfolios(portfolios);
+    debugPrint('✅ Portfolio saved successfully');
   }
 
   static Future<void> updatePortfolio(int index, PortfolioItem item) async {
@@ -93,9 +105,23 @@ class DataServiceWeb {
   }
 
   static Future<void> _savePortfolios(List<PortfolioItem> portfolios) async {
-    if (_prefs == null) return;
+    if (_prefs == null) {
+      debugPrint('❌ SharedPreferences not initialized!');
+      return;
+    }
     final jsonList = portfolios.map((p) => p.toJson()).toList();
-    await _prefs!.setString('portfolios', json.encode(jsonList));
+    final jsonString = json.encode(jsonList);
+    debugPrint('💾 Saving ${portfolios.length} portfolios (${jsonString.length} bytes)');
+    await _prefs!.setString('portfolios', jsonString);
+    debugPrint('✅ Data saved to SharedPreferences');
+    
+    // Verify save
+    final saved = _prefs!.getString('portfolios');
+    if (saved != null) {
+      debugPrint('✅ Verification: Data exists in storage (${saved.length} bytes)');
+    } else {
+      debugPrint('❌ Verification FAILED: Data not found in storage!');
+    }
   }
 
   // ==================== Company Info Operations ====================
