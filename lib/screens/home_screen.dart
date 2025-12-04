@@ -114,8 +114,10 @@ class HomeScreen extends StatelessWidget {
                             width: animWidth,
                             height: animHeight,
                             child: Lottie.network(
-                              '/lottie/laptop-graph-hero.json',
+                              '/lottie/laptop-hero-10s.json',
                               fit: BoxFit.contain,
+                              repeat: true,
+                              animate: true,
                               errorBuilder: (context, error, stackTrace) {
                                 // Fallback to icon if Lottie fails to load
                                 return Icon(
