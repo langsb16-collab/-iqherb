@@ -243,11 +243,11 @@ app.get('/', (c) => {
         <!-- Hero Section -->
         <section class="hero-gradient text-white py-3">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <h2 class="text-[10px] sm:text-sm md:text-base font-bold mb-1 leading-tight">
+                <h2 class="text-[8px] sm:text-xs md:text-sm font-bold mb-1 leading-tight">
                     당신의 아이디어,<br>이곳에서 투자와 연결됩니다
                 </h2>
-                <p class="text-[7px] sm:text-[10px] md:text-xs mb-2 opacity-90 leading-snug">
-                    개발자·창업자·창작자를<br>위한 자금 조달 허브
+                <p class="text-[6px] sm:text-[8px] md:text-[10px] mb-2 opacity-90">
+                    개발자·창업자·창작자를 위한 자금 조달 허브
                 </p>
                 <div class="flex flex-wrap justify-center gap-1 text-[6px] sm:text-[8px]">
                     <div class="bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full">
@@ -323,6 +323,38 @@ app.get('/', (c) => {
         <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
         <script>
           const STORAGE_KEY = 'iqherb_projects';
+          const MAX_PROJECTS = 20; // 최대 20개까지만 보관
+          
+          // QuotaExceededError 방지용 래퍼 함수
+          function safeSetItem(key, value) {
+            try {
+              localStorage.setItem(key, value);
+              return true;
+            } catch (e) {
+              const isQuota =
+                e && (
+                  e.name === 'QuotaExceededError' ||
+                  e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || // Firefox
+                  e.code === 22 ||                           // Chrome, Edge
+                  e.code === 1014                            // Firefox
+                );
+
+              if (isQuota) {
+                alert(
+                  '⚠️ 브라우저 저장공간이 가득 찼습니다.\\n\\n' +
+                  '이전 프로젝트 일부를 삭제한 후 다시 시도해 주세요.\\n\\n' +
+                  '또는 "긴급 초기화" 버튼을 클릭하세요.'
+                );
+
+                // 해당 키만 삭제
+                localStorage.removeItem(key);
+                console.warn('⚠️ Storage quota exceeded: ' + key);
+              } else {
+                console.error('❌ localStorage error:', e);
+              }
+              return false;
+            }
+          }
           
           // 페이지 로드 시 localStorage 상태 확인 및 정리
           function initializeStorage() {
@@ -340,7 +372,7 @@ app.get('/', (c) => {
                 // 최근 3개만 유지 (더 적극적)
                 if (parsed.length > 3) {
                   const recent = parsed.slice(-3);
-                  localStorage.setItem(STORAGE_KEY, JSON.stringify(recent));
+                  safeSetItem(STORAGE_KEY, JSON.stringify(recent));
                   console.log(\`✅ 최근 3개 프로젝트만 유지 (\${parsed.length}개 → 3개)\`);
                   alert(\`🔔 알림\\n\\n저장 공간 확보를 위해 오래된 프로젝트가 자동 삭제되었습니다.\\n\\n남은 프로젝트: 최근 3개\`);
                   return recent;
