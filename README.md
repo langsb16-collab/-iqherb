@@ -161,13 +161,14 @@ npm run deploy:prod
 - ✅ **최신 커밋**: Initial commit with full features
 
 ### Cloudflare Pages
-- ⏳ **대기 중**: Cloudflare API 키 설정 필요
-- 🎯 **목표 도메인**: https://iqherb.org
+- ✅ **배포 완료**: https://75bf2e22.iqherb.pages.dev
+- ✅ **프로젝트명**: iqherb
+- 🎯 **커스텀 도메인**: https://iqherb.org (연결 대기)
 
 ## 향후 개발 계획
 
 🔄 **진행 예정**
-- Cloudflare Pages 배포
+- D1 프로덕션 데이터베이스 연결 (Cloudflare 대시보드에서 수동 설정)
 - 커스텀 도메인 연결 (iqherb.org)
 - 프로젝트 상세 페이지 구현
 - 이미지 갤러리 기능
