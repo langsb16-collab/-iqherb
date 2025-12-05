@@ -323,7 +323,36 @@ app.get('/', (c) => {
         <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
         <script>
           const STORAGE_KEY = 'iqherb_projects';
-          let projects = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+          
+          // 페이지 로드 시 localStorage 상태 확인 및 정리
+          function initializeStorage() {
+            try {
+              const data = localStorage.getItem(STORAGE_KEY) || '[]';
+              const sizeInMB = (new Blob([data]).size / 1024 / 1024);
+              
+              // 4MB 이상이면 자동으로 정리 (조선시대 탈출!)
+              if (sizeInMB > 4) {
+                console.warn(\`⚠️ localStorage 용량 초과: \${sizeInMB.toFixed(2)}MB - 자동 정리 중...\`);
+                const parsed = JSON.parse(data);
+                
+                // 최근 10개만 유지
+                if (parsed.length > 10) {
+                  const recent = parsed.slice(-10);
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify(recent));
+                  console.log(\`✅ 최근 10개 프로젝트만 유지 (\${parsed.length}개 → 10개)\`);
+                  return recent;
+                }
+              }
+              
+              return JSON.parse(data);
+            } catch (e) {
+              console.error('Storage initialization error:', e);
+              localStorage.removeItem(STORAGE_KEY);
+              return [];
+            }
+          }
+          
+          let projects = initializeStorage();
           let editing = null;
 
           function loadPage() {
@@ -370,8 +399,25 @@ app.get('/', (c) => {
           function renderAdminPanel() {
             const storageInfo = getStorageInfo();
             const storageColor = storageInfo.percentage > 80 ? 'text-red-600' : storageInfo.percentage > 50 ? 'text-orange-600' : 'text-green-600';
+            const showWarning = storageInfo.percentage > 70;
             
             document.getElementById('adminContent').innerHTML = \`
+              \${showWarning ? \`
+              <div class="bg-red-600 text-white py-4 px-6">
+                <div class="max-w-7xl mx-auto flex items-center justify-between">
+                  <div class="flex items-center gap-4">
+                    <i class="fas fa-exclamation-triangle text-3xl"></i>
+                    <div>
+                      <div class="font-bold text-lg">⚠️ 저장 공간 부족! (\${storageInfo.percentage}% 사용 중)</div>
+                      <div class="text-sm">새 프로젝트 등록 전에 반드시 공간을 확보하세요!</div>
+                    </div>
+                  </div>
+                  <button onclick="clearStorage()" class="px-6 py-3 bg-white text-red-600 rounded-lg font-bold hover:bg-gray-100 text-lg">
+                    <i class="fas fa-trash mr-2"></i>지금 초기화
+                  </button>
+                </div>
+              </div>
+              \` : ''}
               <header class="bg-white shadow p-4">
                 <div class="max-w-7xl mx-auto">
                   <div class="flex justify-between items-center mb-3">
