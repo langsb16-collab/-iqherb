@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 페이지 (독립형) - OpenFunding IT Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="adminApp"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    <script>
+// LocalStorage-only Admin Page (No API calls)
+let projects = []
+let editingProject = null
+
+// Load projects from localStorage only
+function loadProjects() {
+  projects = JSON.parse(localStorage.getItem('iqherb_projects') || '[]')
+  displayProjects()
+}
+
+// Save to localStorage
+function saveProject(data) {
+  const projects = JSON.parse(localStorage.getItem('iqherb_projects') || '[]')
+  
+  if (data.id) {
+    // Update existing
+    const index = projects.findIndex(p => p.id === data.id)
+    if (index !== -1) {
+      projects[index] = { ...data, updated_at: new Date().toISOString() }
+    }
+  } else {
+    // Add new
+    data.id = Date.now()
+    data.created_at = new Date().toISOString()
+    data.status = 'active'
+    projects.push(data)
+  }
+  
+  localStorage.setItem('iqherb_projects', JSON.stringify(projects))
+  return true
+}
+
+// Delete from localStorage
+function deleteProjectFromStorage(id) {
+  const projects = JSON.parse(localStorage.getItem('iqherb_projects') || '[]')
+  const filtered = projects.filter(p => p.id !== id)
+  localStorage.setItem('iqherb_projects', JSON.stringify(filtered))
+}
+
+// Image upload to Base64
+function handleImageUpload(inputElement, callback) {
+  const file = inputElement.files[0]
+  if (!file) return
+  
+  if (file.size > 2 * 1024 * 1024) {
+    alert('이미지 크기는 2MB 이하여야 합니다')
+    inputElement.value = ''
+    return
+  }
+  
+  const reader = new FileReader()
+  reader.onload = (e) => callback(e.target.result)
+  reader.onerror = () => alert('이미지 업로드에 실패했습니다')
+  reader.readAsDataURL(file)
+}
+
+// Get YouTube video ID
+function getYouTubeVideoId(url) {
+  if (!url) return null
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
+  const match = url.match(regExp)
+  return (match && match[2].length === 11) ? match[2] : null
+}
+
+// Get YouTube thumbnail
+function getYouTubeThumbnail(url) {
+  const videoId = getYouTubeVideoId(url)
+  return videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null
+}
+
+// Preview YouTube
+function previewYouTube(url) {
+  const preview = document.getElementById('youtubePreview')
+  const thumb = document.getElementById('youtubeThumb')
+  const thumbnail = getYouTubeThumbnail(url)
+  if (thumbnail) {
+    thumb.src = thumbnail
+    preview.classList.remove('hidden')
+  } else {
+    preview.classList.add('hidden')
+  }
+}
+
+// Display projects
+function displayProjects() {
+  const container = document.getElementById('projectsList')
+  const loading = document.getElementById('loadingIndicator')
+  
+  loading.classList.add('hidden')
+  
+  if (projects.length === 0) {
+    container.innerHTML = `
+      <div class="p-12 text-center text-gray-500">
+        <i class="fas fa-inbox text-6xl mb-4"></i>
+        <p class="text-lg">등록된 프로젝트가 없습니다</p>
+        <p class="text-sm mt-2">브라우저 로컬 저장소에 저장됩니다</p>
+      </div>
+    `
+  } else {
+    container.innerHTML = projects.map(p => `
+      <div class="p-6 hover:bg-gray-50 transition">
+        <div class="flex justify-between items-start">
+          <div class="flex-1">
+            <h4 class="text-lg font-bold text-gray-900 mb-2">${p.title}</h4>
+            <p class="text-gray-600 text-sm mb-3">${p.description || ''}</p>
+            <div class="flex flex-wrap gap-2 text-sm">
+              <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full">${p.funding_type || ''}</span>
+              <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full">${p.category || ''}</span>
+              <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full font-semibold">${(p.amount || 0).toLocaleString()}만원</span>
+            </div>
+          </div>
+          <div class="flex gap-2 ml-4">
+            <button onclick="editProject(${p.id})" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button onclick="deleteProject(${p.id})" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    `).join('')
+  }
+}
+
+// Show project form
+function showProjectForm() {
+  editingProject = null
+  document.getElementById('formTitle').textContent = '새 프로젝트 추가'
+  document.getElementById('projectForm').reset()
+  document.getElementById('thumbnailPreview').classList.add('hidden')
+  document.getElementById('youtubePreview').classList.add('hidden')
+  document.getElementById('projectFormModal').classList.remove('hidden')
+}
+
+// Close form
+function closeProjectForm() {
+  document.getElementById('projectFormModal').classList.add('hidden')
+  editingProject = null
+}
+
+// Edit project
+function editProject(id) {
+  const project = projects.find(p => p.id === id)
+  if (!project) return
+  
+  editingProject = project
+  document.getElementById('formTitle').textContent = '프로젝트 수정'
+  
+  const form = document.getElementById('projectForm')
+  Object.keys(project).forEach(key => {
+    if (form.elements[key]) form.elements[key].value = project[key] || ''
+  })
+  
+  if (project.thumbnail) {
+    document.getElementById('thumbnailBase64').value = project.thumbnail
+    document.getElementById('thumbnailImg').src = project.thumbnail
+    document.getElementById('thumbnailPreview').classList.remove('hidden')
+  }
+  
+  if (project.youtube_link) {
+    previewYouTube(project.youtube_link)
+  }
+  
+  document.getElementById('projectFormModal').classList.remove('hidden')
+}
+
+// Delete project
+function deleteProject(id) {
+  if (!confirm('정말 이 프로젝트를 삭제하시겠습니까?')) return
+  deleteProjectFromStorage(id)
+  alert('삭제되었습니다')
+  loadProjects()
+}
+
+// Handle form submit
+function handleProjectSubmit(e) {
+  e.preventDefault()
+  
+  const formData = new FormData(e.target)
+  const data = Object.fromEntries(formData.entries())
+  
+  const thumbnailBase64 = document.getElementById('thumbnailBase64').value
+  if (thumbnailBase64) data.thumbnail = thumbnailBase64
+  
+  if (editingProject) {
+    data.id = editingProject.id
+  }
+  
+  if (saveProject(data)) {
+    alert(editingProject ? '프로젝트가 수정되었습니다' : '프로젝트가 추가되었습니다')
+    closeProjectForm()
+    loadProjects()
+  }
+}
+
+// Render page
+function renderAdminPage() {
+  const app = document.getElementById('adminApp')
+  
+  app.innerHTML = `
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="flex justify-between items-center">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">
+              <i class="fas fa-cog text-purple-600 mr-2"></i>
+              관리자 페이지 (독립형)
+            </h1>
+            <p class="text-sm text-gray-600 mt-1">브라우저 로컬 저장소 사용</p>
+          </div>
+          <div class="flex gap-3">
+            <button onclick="showProjectForm()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+              <i class="fas fa-plus mr-2"></i>새 프로젝트
+            </button>
+            <a href="/" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+              <i class="fas fa-home mr-2"></i>메인으로
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div id="projectFormModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+      <div class="min-h-screen px-4 py-8">
+        <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-2xl">
+          <div class="p-6 border-b flex justify-between items-center">
+            <h2 class="text-2xl font-bold"><span id="formTitle">새 프로젝트 추가</span></h2>
+            <button onclick="closeProjectForm()" class="text-gray-500 hover:text-gray-700">
+              <i class="fas fa-times text-2xl"></i>
+            </button>
+          </div>
+          
+          <form id="projectForm" class="p-6 space-y-6" onsubmit="handleProjectSubmit(event)">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">프로젝트명 *</label>
+                <input type="text" name="title" required class="w-full border border-gray-300 rounded-lg px-4 py-2">
+              </div>
+              
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">한줄 소개</label>
+                <textarea name="description" rows="2" class="w-full border border-gray-300 rounded-lg px-4 py-2"></textarea>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">카테고리 *</label>
+                <select name="category" required class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                  <option value="">선택하세요</option>
+                  <option value="앱">앱</option>
+                  <option value="웹플랫폼">웹플랫폼</option>
+                  <option value="O2O">O2O</option>
+                  <option value="게임">게임</option>
+                  <option value="기타">기타</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">자금 방식 *</label>
+                <select name="funding_type" required class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                  <option value="">선택하세요</option>
+                  <option value="투자">투자</option>
+                  <option value="수익분배">수익분배</option>
+                  <option value="대출희망">대출희망</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">희망 금액 (만원) *</label>
+                <input type="number" name="amount" required min="0" step="100" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">지원 언어</label>
+                <input type="text" name="languages" placeholder="예: 한국어, 영어" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+              </div>
+              
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">유튜브 링크</label>
+                <input type="url" name="youtube_link" id="youtubeLink" placeholder="https://www.youtube.com/watch?v=..." 
+                       class="w-full border border-gray-300 rounded-lg px-4 py-2" onchange="previewYouTube(this.value)">
+                <div id="youtubePreview" class="mt-3 hidden">
+                  <img id="youtubeThumb" src="" alt="YouTube Thumbnail" class="w-64 h-auto rounded">
+                </div>
+              </div>
+              
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">썸네일 이미지 업로드</label>
+                <input type="file" id="thumbnailUpload" accept="image/*" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                <input type="hidden" name="thumbnail" id="thumbnailBase64">
+                <div id="thumbnailPreview" class="mt-3 hidden">
+                  <img id="thumbnailImg" src="" alt="Thumbnail" class="w-64 h-auto rounded">
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">담당자 이름</label>
+                <input type="text" name="contact_name" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">이메일</label>
+                <input type="email" name="contact_email" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+              </div>
+            </div>
+            
+            <div class="flex gap-3 justify-end pt-6 border-t">
+              <button type="button" onclick="closeProjectForm()" class="px-6 py-2 border border-gray-300 rounded-lg">취소</button>
+              <button type="submit" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                <i class="fas fa-save mr-2"></i>저장
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="bg-white rounded-xl shadow-md">
+        <div class="p-6 border-b">
+          <h3 class="text-xl font-bold">등록된 프로젝트 (총 ${projects.length}개)</h3>
+        </div>
+        <div id="projectsList" class="divide-y"></div>
+        <div id="loadingIndicator" class="p-12 text-center">
+          <i class="fas fa-spinner fa-spin text-4xl text-purple-600"></i>
+        </div>
+      </div>
+    </section>
+  `
+  
+  document.getElementById('thumbnailUpload').addEventListener('change', function() {
+    handleImageUpload(this, (base64) => {
+      document.getElementById('thumbnailBase64').value = base64
+      document.getElementById('thumbnailImg').src = base64
+      document.getElementById('thumbnailPreview').classList.remove('hidden')
+    })
+  })
+  
+  loadProjects()
+}
+
+document.addEventListener('DOMContentLoaded', renderAdminPage)
+    </script>
+</body>
+</html>
