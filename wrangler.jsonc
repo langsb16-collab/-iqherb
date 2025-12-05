@@ -5,12 +5,13 @@
   "pages_build_output_dir": "./dist",
   "compatibility_flags": [
     "nodejs_compat"
-  ],
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "iqherb-production",
-      "database_id": "placeholder"
-    }
   ]
+  // D1 database will be added manually in Cloudflare Dashboard
+  // "d1_databases": [
+  //   {
+  //     "binding": "DB",
+  //     "database_name": "iqherb-production",
+  //     "database_id": "placeholder"
+  //   }
+  // ]
 }
