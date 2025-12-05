@@ -460,7 +460,7 @@ app.get('/', (c) => {
             editing = null;
           }
           
-          function compressImage(file, maxWidth = 800, quality = 0.6) {
+          function compressImage(file, maxWidth = 600, quality = 0.4) {
             return new Promise((resolve, reject) => {
               const reader = new FileReader();
               reader.onload = (e) => {
@@ -470,19 +470,27 @@ app.get('/', (c) => {
                   let width = img.width;
                   let height = img.height;
                   
-                  // Resize if larger than maxWidth
-                  if (width > maxWidth) {
-                    height = (height * maxWidth) / width;
-                    width = maxWidth;
+                  // 더 작은 크기로 리사이즈 (600px, 40% 품질)
+                  if (width > maxWidth || height > maxWidth) {
+                    if (width > height) {
+                      height = (height * maxWidth) / width;
+                      width = maxWidth;
+                    } else {
+                      width = (width * maxWidth) / height;
+                      height = maxWidth;
+                    }
                   }
                   
                   canvas.width = width;
                   canvas.height = height;
                   
                   const ctx = canvas.getContext('2d');
+                  // 이미지 스무딩으로 품질 개선
+                  ctx.imageSmoothingEnabled = true;
+                  ctx.imageSmoothingQuality = 'high';
                   ctx.drawImage(img, 0, 0, width, height);
                   
-                  // Convert to compressed base64
+                  // JPEG 40% 품질로 압축 (용량 대폭 감소)
                   const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
                   resolve(compressedBase64);
                 };
@@ -510,38 +518,62 @@ app.get('/', (c) => {
             const imagesData = [];
             const fileArray = Array.from(files);
             
+            // 로딩 표시
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'text-center py-4';
+            loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin text-purple-600"></i> 이미지 압축 중...';
+            previews.appendChild(loadingDiv);
+            
             for (let i = 0; i < fileArray.length; i++) {
               const file = fileArray[i];
               
-              if (file.size > 5 * 1024 * 1024) {
-                alert('이미지는 5MB 이하만 가능합니다');
+              if (file.size > 10 * 1024 * 1024) {
+                alert(\`\${file.name}: 이미지는 10MB 이하만 가능합니다\`);
                 continue;
               }
               
               try {
-                // Compress image to reduce storage size
-                const compressedBase64 = await compressImage(file, 800, 0.6);
+                // 강력한 압축 (600px, 40% 품질)
+                const compressedBase64 = await compressImage(file, 600, 0.4);
                 
-                // Check compressed size (rough estimate)
+                // 압축 후 크기 체크
                 const sizeInKB = (compressedBase64.length * 0.75) / 1024;
-                console.log(\`압축 후 이미지 크기: \${sizeInKB.toFixed(2)}KB\`);
+                console.log(\`[\${file.name}] 원본: \${(file.size/1024).toFixed(0)}KB → 압축: \${sizeInKB.toFixed(0)}KB (압축률: \${((1 - sizeInKB/(file.size/1024)) * 100).toFixed(1)}%)\`);
                 
-                imagesData.push(compressedBase64);
+                // 압축 후에도 너무 크면 추가 압축
+                if (sizeInKB > 300) {
+                  console.log('추가 압축 진행...');
+                  const recompressed = await compressImage(file, 500, 0.3);
+                  const newSize = (recompressed.length * 0.75) / 1024;
+                  console.log(\`재압축 완료: \${newSize.toFixed(0)}KB\`);
+                  imagesData.push(recompressed);
+                } else {
+                  imagesData.push(compressedBase64);
+                }
                 
-                const div = document.createElement('div');
-                div.className = 'relative';
-                div.innerHTML = \`
-                  <img src="\${compressedBase64}" class="w-full h-24 object-cover rounded">
-                  <button type="button" onclick="removeImage(\${i})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 text-xs">×</button>
-                \`;
-                previews.appendChild(div);
               } catch (error) {
-                console.error('이미지 처리 실패:', error);
-                alert('이미지 처리 중 오류가 발생했습니다');
+                console.error(\`[\${file.name}] 이미지 처리 실패:\`, error);
+                alert(\`\${file.name}: 이미지 처리 중 오류가 발생했습니다\`);
               }
             }
             
+            // 로딩 제거 및 미리보기 표시
+            previews.innerHTML = '';
+            imagesData.forEach((base64, i) => {
+              const div = document.createElement('div');
+              div.className = 'relative';
+              div.innerHTML = \`
+                <img src="\${base64}" class="w-full h-24 object-cover rounded">
+                <button type="button" onclick="removeImage(\${i})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 text-xs">×</button>
+              \`;
+              previews.appendChild(div);
+            });
+            
             imagesDataInput.value = JSON.stringify(imagesData);
+            
+            // 전체 크기 확인
+            const totalSizeKB = (JSON.stringify(imagesData).length * 0.75) / 1024;
+            console.log(\`총 이미지 크기: \${totalSizeKB.toFixed(0)}KB\`);
           }
           
           function removeImage(index) {
@@ -563,42 +595,58 @@ app.get('/', (c) => {
             e.preventDefault();
             const data = Object.fromEntries(new FormData(e.target));
             
+            // 임시 저장
+            const tempProjects = [...projects];
+            
             if (editing) {
-              const idx = projects.findIndex(p => p.id === editing.id);
-              projects[idx] = {...editing, ...data};
+              const idx = tempProjects.findIndex(p => p.id === editing.id);
+              tempProjects[idx] = {...editing, ...data};
             } else {
               data.id = Date.now();
               data.created_at = new Date().toISOString();
-              projects.push(data);
+              tempProjects.push(data);
             }
             
             try {
-              const jsonData = JSON.stringify(projects);
+              const jsonData = JSON.stringify(tempProjects);
+              const sizeInKB = (new Blob([jsonData]).size / 1024).toFixed(0);
               const sizeInMB = (new Blob([jsonData]).size / 1024 / 1024).toFixed(2);
-              console.log(\`저장 데이터 크기: \${sizeInMB}MB\`);
+              console.log(\`📦 전체 저장 데이터: \${sizeInKB}KB (\${sizeInMB}MB)\`);
               
-              // Check if data is too large (approaching 5MB localStorage limit)
-              if (new Blob([jsonData]).size > 4.5 * 1024 * 1024) {
-                alert('저장 용량이 부족합니다. 이미지 수를 줄이거나 기존 프로젝트를 삭제해주세요.');
-                if (!editing) {
-                  projects.pop(); // Remove the newly added project
-                }
+              // localStorage 한계는 보통 5-10MB
+              const maxSizeKB = 4500; // 4.5MB를 안전 한계로 설정
+              
+              if (new Blob([jsonData]).size > maxSizeKB * 1024) {
+                const imagesSize = data.images ? (data.images.length * 0.75 / 1024).toFixed(0) : 0;
+                alert('❌ 저장 실패: 용량 초과 (' + sizeInKB + 'KB / ' + maxSizeKB + 'KB)\\n\\n' +
+                      '현재 프로젝트 이미지: ' + imagesSize + 'KB\\n\\n' +
+                      '해결 방법:\\n' +
+                      '1. 이미지 수를 1-2장으로 줄이기\\n' +
+                      '2. 기존 프로젝트 삭제 후 재시도\\n' +
+                      '3. 이미지 없이 저장 후 나중에 추가');
                 return;
               }
               
+              // 실제 저장
               localStorage.setItem(STORAGE_KEY, jsonData);
-              alert(editing ? '수정되었습니다' : '추가되었습니다');
+              projects = tempProjects;
+              
+              console.log(\`✅ 저장 성공: \${sizeInKB}KB\`);
+              alert(editing ? '✅ 수정되었습니다' : '✅ 추가되었습니다');
               closeForm();
               renderAdminPanel();
             } catch (error) {
-              console.error('저장 오류:', error);
+              console.error('❌ 저장 오류:', error);
               if (error.name === 'QuotaExceededError') {
-                alert('저장 공간이 부족합니다. 이미지 품질을 낮추거나 기존 프로젝트를 삭제해주세요.');
-                if (!editing) {
-                  projects.pop(); // Rollback
-                }
+                const currentSize = JSON.stringify(projects).length / 1024;
+                alert('❌ 저장 공간 부족\\n\\n' +
+                      '현재 사용량: ' + currentSize.toFixed(0) + 'KB\\n\\n' +
+                      '해결 방법:\\n' +
+                      '1. 기존 프로젝트 삭제\\n' +
+                      '2. 이미지 수 줄이기 (1-2장)\\n' +
+                      '3. 브라우저 데이터 초기화');
               } else {
-                alert('저장 중 오류가 발생했습니다: ' + error.message);
+                alert('❌ 저장 오류: ' + error.message);
               }
             }
           }
