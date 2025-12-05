@@ -244,10 +244,10 @@ app.get('/', (c) => {
         <section class="hero-gradient text-white py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 <h2 class="text-base sm:text-xl md:text-2xl font-bold mb-2 leading-tight">
-                    당신의 아이디어, 이곳에서<br class="sm:hidden"> 투자와 연결됩니다
+                    당신의 아이디어,<br>이곳에서 투자와 연결됩니다
                 </h2>
-                <p class="text-xs sm:text-sm md:text-base mb-3 opacity-90">
-                    개발자·창업자·창작자를 위한 자금 조달 허브
+                <p class="text-xs sm:text-sm md:text-base mb-3 opacity-90 leading-snug">
+                    개발자·창업자·창작자를<br>위한 자금 조달 허브
                 </p>
                 <div class="flex flex-wrap justify-center gap-2 text-xs sm:text-sm">
                     <div class="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
