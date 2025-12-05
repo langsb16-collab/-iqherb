@@ -64,6 +64,20 @@ function renderAdminPage() {
           </div>
         </div>
       </div>
+      
+      <!-- Database Status Banner -->
+      <div id="dbStatusBanner" class="hidden bg-yellow-50 border-b border-yellow-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div class="flex items-center">
+            <i class="fas fa-info-circle text-yellow-600 mr-3"></i>
+            <div class="flex-1">
+              <p class="text-sm text-yellow-800">
+                <strong>데이터베이스 미연결:</strong> 프로덕션 환경에서 프로젝트를 저장하려면 D1 데이터베이스를 연결해주세요.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </header>
 
     <!-- Project Form Modal -->
@@ -303,15 +317,43 @@ async function loadProjects() {
     const response = await axios.get('/api/projects')
     
     if (response.data.success) {
-      projects = response.data.data
+      projects = response.data.data || []
       displayProjects()
+      
+      // Show database message if present
+      if (response.data.message) {
+        const container = document.getElementById('projectsList')
+        container.innerHTML = `
+          <div class="p-12 text-center">
+            <i class="fas fa-info-circle text-6xl text-blue-500 mb-4"></i>
+            <p class="text-xl text-gray-700 mb-2">데이터베이스 연결 필요</p>
+            <p class="text-gray-600">${response.data.message}</p>
+            <p class="text-sm text-gray-500 mt-4">
+              로컬 환경에서는 정상 작동합니다. 프로덕션 배포 후 D1 데이터베이스를 연결해주세요.
+            </p>
+          </div>
+        ` + container.innerHTML
+      }
+    } else {
+      throw new Error('Invalid response')
     }
   } catch (error) {
     console.error('Failed to load projects:', error)
-    document.getElementById('loadingIndicator').innerHTML = `
-      <i class="fas fa-exclamation-triangle text-4xl text-red-600"></i>
-      <p class="mt-4 text-gray-600">프로젝트를 불러오는데 실패했습니다</p>
-    `
+    const loading = document.getElementById('loadingIndicator')
+    if (loading) {
+      loading.innerHTML = `
+        <div class="p-12 text-center">
+          <i class="fas fa-exclamation-triangle text-4xl text-red-600 mb-4"></i>
+          <p class="text-xl text-gray-700 mb-2">프로젝트를 불러오는데 실패했습니다</p>
+          <p class="text-sm text-gray-600">${error.message || '알 수 없는 오류'}</p>
+          <button onclick="loadProjects()" class="mt-4 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+            다시 시도
+          </button>
+        </div>
+      `
+    }
+    projects = []
+    displayProjects()
   }
 }
 
