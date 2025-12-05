@@ -241,23 +241,23 @@ app.get('/', (c) => {
         </header>
 
         <!-- Hero Section -->
-        <section class="hero-gradient text-white py-5">
+        <section class="hero-gradient text-white py-3">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <h2 class="text-sm sm:text-base md:text-lg font-bold mb-1.5 leading-tight">
+                <h2 class="text-[10px] sm:text-sm md:text-base font-bold mb-1 leading-tight">
                     당신의 아이디어,<br>이곳에서 투자와 연결됩니다
                 </h2>
-                <p class="text-[10px] sm:text-xs md:text-sm mb-2.5 opacity-90 leading-snug">
+                <p class="text-[7px] sm:text-[10px] md:text-xs mb-2 opacity-90 leading-snug">
                     개발자·창업자·창작자를<br>위한 자금 조달 허브
                 </p>
-                <div class="flex flex-wrap justify-center gap-1.5 text-[10px] sm:text-xs">
-                    <div class="bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full">
-                        <i class="fas fa-hand-holding-usd mr-1"></i>투자
+                <div class="flex flex-wrap justify-center gap-1 text-[6px] sm:text-[8px]">
+                    <div class="bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full">
+                        <i class="fas fa-hand-holding-usd mr-0.5"></i>투자
                     </div>
-                    <div class="bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full">
-                        <i class="fas fa-chart-line mr-1"></i>수익분배
+                    <div class="bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full">
+                        <i class="fas fa-chart-line mr-0.5"></i>수익분배
                     </div>
-                    <div class="bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full">
-                        <i class="fas fa-coins mr-1"></i>대출희망
+                    <div class="bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full">
+                        <i class="fas fa-coins mr-0.5"></i>대출희망
                     </div>
                 </div>
             </div>
@@ -562,7 +562,7 @@ app.get('/', (c) => {
             editing = null;
           }
           
-          function compressImage(file, maxWidth = 500, quality = 0.3) {
+          function compressImage(file, maxWidth = 400, quality = 0.2) {
             return new Promise((resolve, reject) => {
               const reader = new FileReader();
               reader.onload = (e) => {
@@ -572,7 +572,7 @@ app.get('/', (c) => {
                   let width = img.width;
                   let height = img.height;
                   
-                  // 500px로 리사이즈 (더 작게)
+                  // 400px로 리사이즈 (더욱 작게)
                   if (width > maxWidth || height > maxWidth) {
                     if (width > height) {
                       height = (height * maxWidth) / width;
@@ -591,7 +591,7 @@ app.get('/', (c) => {
                   ctx.imageSmoothingQuality = 'high';
                   ctx.drawImage(img, 0, 0, width, height);
                   
-                  // JPEG 30% 품질로 강력 압축
+                  // JPEG 20% 품질로 극강 압축
                   const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
                   resolve(compressedBase64);
                 };
@@ -634,17 +634,17 @@ app.get('/', (c) => {
               }
               
               try {
-                // 초강력 압축 (500px, 30% 품질)
-                let compressedBase64 = await compressImage(file, 500, 0.3);
+                // 극강 압축 (400px, 20% 품질)
+                let compressedBase64 = await compressImage(file, 400, 0.2);
                 let sizeInKB = (compressedBase64.length * 0.75) / 1024;
                 
-                // 목표: 200KB 이하로 압축
+                // 목표: 100KB 이하로 압축 (더 작게!)
                 let attempt = 1;
-                while (sizeInKB > 200 && attempt <= 3) {
-                  const newMaxWidth = 500 - (attempt * 100);
-                  const newQuality = 0.3 - (attempt * 0.05);
+                while (sizeInKB > 100 && attempt <= 4) {
+                  const newMaxWidth = 400 - (attempt * 80);
+                  const newQuality = 0.2 - (attempt * 0.03);
                   console.log(\`[\${file.name}] 추가 압축 \${attempt}회: \${newMaxWidth}px, \${(newQuality*100).toFixed(0)}%\`);
-                  compressedBase64 = await compressImage(file, newMaxWidth, newQuality);
+                  compressedBase64 = await compressImage(file, newMaxWidth, Math.max(0.05, newQuality));
                   sizeInKB = (compressedBase64.length * 0.75) / 1024;
                   attempt++;
                 }
@@ -696,6 +696,15 @@ app.get('/', (c) => {
             e.preventDefault();
             const data = Object.fromEntries(new FormData(e.target));
             
+            // 저장 전에 공간 확보 (자동)
+            const currentSize = (new Blob([JSON.stringify(projects)]).size / 1024 / 1024);
+            if (currentSize > 3 && projects.length > 3) {
+              console.log('⚠️ 공간 부족 감지 - 자동 정리 중...');
+              projects = projects.slice(-3); // 최근 3개만 유지
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+              console.log('✅ 자동 정리 완료');
+            }
+            
             // 임시 저장
             const tempProjects = [...projects];
             
@@ -715,7 +724,7 @@ app.get('/', (c) => {
               console.log(\`📦 전체 저장 데이터: \${sizeInKB}KB (\${sizeInMB}MB)\`);
               
               // localStorage 한계는 보통 5-10MB
-              const maxSizeKB = 4500; // 4.5MB를 안전 한계로 설정
+              const maxSizeKB = 3500; // 3.5MB로 더 안전하게 설정
               
               if (new Blob([jsonData]).size > maxSizeKB * 1024) {
                 const imagesSize = data.images ? (data.images.length * 0.75 / 1024).toFixed(0) : 0;
