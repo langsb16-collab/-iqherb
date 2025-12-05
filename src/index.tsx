@@ -389,10 +389,27 @@ app.get('/', (c) => {
 
           function clearStorage() {
             if (confirm('⚠️ 모든 프로젝트 데이터가 삭제됩니다. 계속하시겠습니까?\\n\\n(백업하지 않은 데이터는 복구할 수 없습니다)')) {
-              localStorage.removeItem(STORAGE_KEY);
+              try {
+                localStorage.removeItem(STORAGE_KEY);
+                localStorage.clear(); // 전체 localStorage 초기화
+                projects = [];
+                alert('✅ 저장 공간이 완전히 초기화되었습니다.\\n\\n이제 새 프로젝트를 등록할 수 있습니다.');
+                location.reload(); // 페이지 새로고침
+              } catch (e) {
+                alert('❌ 초기화 중 오류가 발생했습니다. 브라우저를 새로고침해주세요.');
+              }
+            }
+          }
+          
+          function emergencyClear() {
+            // 긴급 초기화 (확인 없이)
+            try {
+              localStorage.clear();
               projects = [];
-              alert('✅ 저장 공간이 초기화되었습니다.');
-              renderAdminPanel();
+              alert('🚨 긴급 초기화 완료!\\n\\n페이지를 새로고침합니다.');
+              location.reload();
+            } catch (e) {
+              alert('오류 발생. 브라우저 설정에서 캐시를 삭제해주세요.');
             }
           }
 
@@ -422,12 +439,15 @@ app.get('/', (c) => {
                 <div class="max-w-7xl mx-auto">
                   <div class="flex justify-between items-center mb-3">
                     <h1 class="text-2xl font-bold"><i class="fas fa-cog text-purple-600 mr-2"></i>프로젝트 관리</h1>
-                    <div class="flex gap-3">
+                    <div class="flex gap-2">
                       <button onclick="showForm()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
                         <i class="fas fa-plus mr-2"></i>새 프로젝트
                       </button>
-                      <button onclick="clearStorage()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                      <button onclick="clearStorage()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700" title="확인 후 삭제">
                         <i class="fas fa-trash mr-2"></i>전체 삭제
+                      </button>
+                      <button onclick="emergencyClear()" class="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 font-bold" title="즉시 초기화">
+                        <i class="fas fa-bolt mr-2"></i>긴급 초기화
                       </button>
                       <a href="/" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
                         <i class="fas fa-home mr-2"></i>메인
@@ -708,26 +728,38 @@ app.get('/', (c) => {
                 return;
               }
               
-              // 실제 저장
-              localStorage.setItem(STORAGE_KEY, jsonData);
-              projects = tempProjects;
-              
-              console.log(\`✅ 저장 성공: \${sizeInKB}KB\`);
-              alert(editing ? '✅ 수정되었습니다' : '✅ 추가되었습니다');
-              closeForm();
-              renderAdminPanel();
+              // 실제 저장 시도
+              try {
+                localStorage.setItem(STORAGE_KEY, jsonData);
+                projects = tempProjects;
+                console.log(\`✅ 저장 성공: \${sizeInKB}KB\`);
+                alert(editing ? '✅ 수정되었습니다' : '✅ 추가되었습니다');
+                closeForm();
+                renderAdminPanel();
+              } catch (saveError) {
+                console.error('❌ localStorage 저장 실패:', saveError);
+                throw saveError; // 외부 catch로 전달
+              }
             } catch (error) {
               console.error('❌ 저장 오류:', error);
               if (error.name === 'QuotaExceededError') {
-                const currentSize = JSON.stringify(projects).length / 1024;
-                alert('❌ 저장 공간 부족\\n\\n' +
-                      '현재 사용량: ' + currentSize.toFixed(0) + 'KB\\n\\n' +
-                      '해결 방법:\\n' +
-                      '1. 기존 프로젝트 삭제\\n' +
-                      '2. 이미지 수 줄이기 (1-2장)\\n' +
-                      '3. 브라우저 데이터 초기화');
+                // 자동 복구 시도
+                if (confirm('🚨 저장 공간 부족!\\n\\n자동으로 공간을 확보하시겠습니까?\\n\\n- 기존 프로젝트 중 오래된 것들이 삭제됩니다\\n- 최근 5개만 유지됩니다')) {
+                  try {
+                    // 최근 5개만 유지
+                    const recentProjects = projects.slice(-5);
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(recentProjects));
+                    projects = recentProjects;
+                    alert('✅ 공간 확보 완료!\\n\\n다시 저장을 시도해주세요.');
+                    renderAdminPanel();
+                  } catch (e) {
+                    alert('❌ 자동 복구 실패\\n\\n"전체 삭제" 버튼을 클릭하여 수동으로 초기화해주세요.');
+                  }
+                } else {
+                  alert('💡 해결 방법:\\n\\n1. "전체 삭제" 버튼 클릭\\n2. 또는 기존 프로젝트 일부 삭제\\n3. 이미지 수 줄이기 (1장 권장)');
+                }
               } else {
-                alert('❌ 저장 오류: ' + error.message);
+                alert('❌ 저장 오류: ' + error.message + '\\n\\n"전체 삭제" 후 다시 시도하세요.');
               }
             }
           }
