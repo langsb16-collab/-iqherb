@@ -330,16 +330,19 @@ app.get('/', (c) => {
               const data = localStorage.getItem(STORAGE_KEY) || '[]';
               const sizeInMB = (new Blob([data]).size / 1024 / 1024);
               
-              // 4MB 이상이면 자동으로 정리 (조선시대 탈출!)
-              if (sizeInMB > 4) {
+              console.log(\`💾 현재 저장 공간: \${sizeInMB.toFixed(2)}MB\`);
+              
+              // 2MB 이상이면 적극적으로 정리
+              if (sizeInMB > 2) {
                 console.warn(\`⚠️ localStorage 용량 초과: \${sizeInMB.toFixed(2)}MB - 자동 정리 중...\`);
                 const parsed = JSON.parse(data);
                 
-                // 최근 10개만 유지
-                if (parsed.length > 10) {
-                  const recent = parsed.slice(-10);
+                // 최근 3개만 유지 (더 적극적)
+                if (parsed.length > 3) {
+                  const recent = parsed.slice(-3);
                   localStorage.setItem(STORAGE_KEY, JSON.stringify(recent));
-                  console.log(\`✅ 최근 10개 프로젝트만 유지 (\${parsed.length}개 → 10개)\`);
+                  console.log(\`✅ 최근 3개 프로젝트만 유지 (\${parsed.length}개 → 3개)\`);
+                  alert(\`🔔 알림\\n\\n저장 공간 확보를 위해 오래된 프로젝트가 자동 삭제되었습니다.\\n\\n남은 프로젝트: 최근 3개\`);
                   return recent;
                 }
               }
@@ -347,7 +350,7 @@ app.get('/', (c) => {
               return JSON.parse(data);
             } catch (e) {
               console.error('Storage initialization error:', e);
-              localStorage.removeItem(STORAGE_KEY);
+              localStorage.clear();
               return [];
             }
           }
@@ -696,13 +699,22 @@ app.get('/', (c) => {
             e.preventDefault();
             const data = Object.fromEntries(new FormData(e.target));
             
-            // 저장 전에 공간 확보 (자동)
+            // 저장 전에 공간 확보 (적극적)
             const currentSize = (new Blob([JSON.stringify(projects)]).size / 1024 / 1024);
-            if (currentSize > 3 && projects.length > 3) {
-              console.log('⚠️ 공간 부족 감지 - 자동 정리 중...');
-              projects = projects.slice(-3); // 최근 3개만 유지
+            if (currentSize > 2 && projects.length > 2) {
+              console.log('⚠️ 공간 부족 감지 - 적극적 정리 중...');
+              projects = projects.slice(-2); // 최근 2개만 유지
               localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-              console.log('✅ 자동 정리 완료');
+              console.log('✅ 자동 정리 완료 - 최근 2개만 유지');
+            }
+            
+            // 이미지 크기 체크
+            if (data.images) {
+              const imageSize = (data.images.length * 0.75 / 1024 / 1024);
+              if (imageSize > 0.5) { // 500KB 이상
+                console.warn(\`⚠️ 이미지가 너무 큽니다: \${imageSize.toFixed(2)}MB\`);
+                alert('⚠️ 경고\\n\\n이미지 크기가 큽니다. 저장에 실패할 수 있습니다.\\n\\n이미지를 1장만 사용하거나, 이미지 없이 저장해보세요.');
+              }
             }
             
             // 임시 저장
@@ -752,11 +764,34 @@ app.get('/', (c) => {
             } catch (error) {
               console.error('❌ 저장 오류:', error);
               if (error.name === 'QuotaExceededError') {
-                // 자동 복구 시도
-                if (confirm('🚨 저장 공간 부족!\\n\\n자동으로 공간을 확보하시겠습니까?\\n\\n- 기존 프로젝트 중 오래된 것들이 삭제됩니다\\n- 최근 5개만 유지됩니다')) {
+                // 이미지 제거 옵션 제공
+                if (confirm('🚨 저장 공간 부족!\\n\\n이미지 없이 저장하시겠습니까?\\n\\n(이미지를 제거하고 나머지 정보만 저장됩니다)')) {
                   try {
-                    // 최근 5개만 유지
-                    const recentProjects = projects.slice(-5);
+                    // 이미지 제거 후 저장
+                    const dataWithoutImages = {...data, images: ''};
+                    if (editing) {
+                      const idx = projects.findIndex(p => p.id === editing.id);
+                      projects[idx] = {...editing, ...dataWithoutImages};
+                    } else {
+                      dataWithoutImages.id = Date.now();
+                      dataWithoutImages.created_at = new Date().toISOString();
+                      projects.push(dataWithoutImages);
+                    }
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+                    alert('✅ 이미지 없이 저장되었습니다!\\n\\n나중에 수정에서 이미지를 추가할 수 있습니다.');
+                    closeForm();
+                    renderAdminPanel();
+                    return;
+                  } catch (e2) {
+                    console.error('이미지 제거 후에도 실패:', e2);
+                  }
+                }
+                
+                // 자동 복구 시도
+                if (confirm('🚨 자동으로 공간을 확보하시겠습니까?\\n\\n- 기존 프로젝트 중 오래된 것들이 삭제됩니다\\n- 최근 2개만 유지됩니다')) {
+                  try {
+                    // 최근 2개만 유지 (더 많이 삭제)
+                    const recentProjects = projects.slice(-2);
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(recentProjects));
                     projects = recentProjects;
                     alert('✅ 공간 확보 완료!\\n\\n다시 저장을 시도해주세요.');
