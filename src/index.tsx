@@ -460,6 +460,40 @@ app.get('/', (c) => {
             editing = null;
           }
           
+          function compressImage(file, maxWidth = 800, quality = 0.6) {
+            return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                  const canvas = document.createElement('canvas');
+                  let width = img.width;
+                  let height = img.height;
+                  
+                  // Resize if larger than maxWidth
+                  if (width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
+                  }
+                  
+                  canvas.width = width;
+                  canvas.height = height;
+                  
+                  const ctx = canvas.getContext('2d');
+                  ctx.drawImage(img, 0, 0, width, height);
+                  
+                  // Convert to compressed base64
+                  const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                  resolve(compressedBase64);
+                };
+                img.onerror = reject;
+                img.src = e.target.result;
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+          }
+
           async function handleImageUpload(event) {
             const files = event.target.files;
             const previews = document.getElementById('imagePreviews');
@@ -479,30 +513,31 @@ app.get('/', (c) => {
             for (let i = 0; i < fileArray.length; i++) {
               const file = fileArray[i];
               
-              if (file.size > 2 * 1024 * 1024) {
-                alert('이미지는 2MB 이하만 가능합니다');
+              if (file.size > 5 * 1024 * 1024) {
+                alert('이미지는 5MB 이하만 가능합니다');
                 continue;
               }
               
               try {
-                const base64 = await new Promise((resolve, reject) => {
-                  const reader = new FileReader();
-                  reader.onload = (e) => resolve(e.target.result);
-                  reader.onerror = reject;
-                  reader.readAsDataURL(file);
-                });
+                // Compress image to reduce storage size
+                const compressedBase64 = await compressImage(file, 800, 0.6);
                 
-                imagesData.push(base64);
+                // Check compressed size (rough estimate)
+                const sizeInKB = (compressedBase64.length * 0.75) / 1024;
+                console.log(\`압축 후 이미지 크기: \${sizeInKB.toFixed(2)}KB\`);
+                
+                imagesData.push(compressedBase64);
                 
                 const div = document.createElement('div');
                 div.className = 'relative';
                 div.innerHTML = \`
-                  <img src="\${base64}" class="w-full h-24 object-cover rounded">
+                  <img src="\${compressedBase64}" class="w-full h-24 object-cover rounded">
                   <button type="button" onclick="removeImage(\${i})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 text-xs">×</button>
                 \`;
                 previews.appendChild(div);
               } catch (error) {
-                console.error('이미지 로드 실패:', error);
+                console.error('이미지 처리 실패:', error);
+                alert('이미지 처리 중 오류가 발생했습니다');
               }
             }
             
@@ -527,6 +562,7 @@ app.get('/', (c) => {
           function save(e) {
             e.preventDefault();
             const data = Object.fromEntries(new FormData(e.target));
+            
             if (editing) {
               const idx = projects.findIndex(p => p.id === editing.id);
               projects[idx] = {...editing, ...data};
@@ -535,10 +571,36 @@ app.get('/', (c) => {
               data.created_at = new Date().toISOString();
               projects.push(data);
             }
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-            alert(editing ? '수정되었습니다' : '추가되었습니다');
-            closeForm();
-            renderAdminPanel();
+            
+            try {
+              const jsonData = JSON.stringify(projects);
+              const sizeInMB = (new Blob([jsonData]).size / 1024 / 1024).toFixed(2);
+              console.log(\`저장 데이터 크기: \${sizeInMB}MB\`);
+              
+              // Check if data is too large (approaching 5MB localStorage limit)
+              if (new Blob([jsonData]).size > 4.5 * 1024 * 1024) {
+                alert('저장 용량이 부족합니다. 이미지 수를 줄이거나 기존 프로젝트를 삭제해주세요.');
+                if (!editing) {
+                  projects.pop(); // Remove the newly added project
+                }
+                return;
+              }
+              
+              localStorage.setItem(STORAGE_KEY, jsonData);
+              alert(editing ? '수정되었습니다' : '추가되었습니다');
+              closeForm();
+              renderAdminPanel();
+            } catch (error) {
+              console.error('저장 오류:', error);
+              if (error.name === 'QuotaExceededError') {
+                alert('저장 공간이 부족합니다. 이미지 품질을 낮추거나 기존 프로젝트를 삭제해주세요.');
+                if (!editing) {
+                  projects.pop(); // Rollback
+                }
+              } else {
+                alert('저장 중 오류가 발생했습니다: ' + error.message);
+              }
+            }
           }
 
           function edit(id) {
