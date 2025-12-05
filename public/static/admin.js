@@ -318,18 +318,28 @@ async function loadProjects() {
     
     if (response.data.success) {
       projects = response.data.data || []
+      
+      // Merge with localStorage if empty
+      if (projects.length === 0) {
+        const localProjects = loadFromLocalStorage()
+        if (localProjects.length > 0) {
+          projects = localProjects
+          console.log('Loaded from localStorage:', projects.length, 'projects')
+        }
+      }
+      
       displayProjects()
       
       // Show database message if present
-      if (response.data.message) {
+      if (response.data.message && projects.length === 0) {
         const container = document.getElementById('projectsList')
         container.innerHTML = `
           <div class="p-12 text-center">
             <i class="fas fa-info-circle text-6xl text-blue-500 mb-4"></i>
-            <p class="text-xl text-gray-700 mb-2">데이터베이스 연결 필요</p>
+            <p class="text-xl text-gray-700 mb-2">데이터베이스 미연결</p>
             <p class="text-gray-600">${response.data.message}</p>
             <p class="text-sm text-gray-500 mt-4">
-              로컬 환경에서는 정상 작동합니다. 프로덕션 배포 후 D1 데이터베이스를 연결해주세요.
+              현재 로컬 저장소 모드로 작동합니다. 프로젝트를 추가하면 브라우저에 임시 저장됩니다.
             </p>
           </div>
         ` + container.innerHTML
@@ -339,21 +349,41 @@ async function loadProjects() {
     }
   } catch (error) {
     console.error('Failed to load projects:', error)
-    const loading = document.getElementById('loadingIndicator')
-    if (loading) {
-      loading.innerHTML = `
-        <div class="p-12 text-center">
-          <i class="fas fa-exclamation-triangle text-4xl text-red-600 mb-4"></i>
-          <p class="text-xl text-gray-700 mb-2">프로젝트를 불러오는데 실패했습니다</p>
-          <p class="text-sm text-gray-600">${error.message || '알 수 없는 오류'}</p>
-          <button onclick="loadProjects()" class="mt-4 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-            다시 시도
-          </button>
-        </div>
-      `
+    
+    // Fallback to localStorage
+    const localProjects = loadFromLocalStorage()
+    if (localProjects.length > 0) {
+      projects = localProjects
+      displayProjects()
+      
+      const loading = document.getElementById('loadingIndicator')
+      if (loading) {
+        loading.innerHTML = `
+          <div class="p-8 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <i class="fas fa-info-circle text-yellow-600 text-2xl mb-2"></i>
+            <p class="text-sm text-yellow-800">
+              <strong>로컬 저장소 모드:</strong> 데이터베이스 연결 실패. ${localProjects.length}개의 프로젝트를 로컬에서 불러왔습니다.
+            </p>
+          </div>
+        `
+      }
+    } else {
+      const loading = document.getElementById('loadingIndicator')
+      if (loading) {
+        loading.innerHTML = `
+          <div class="p-12 text-center">
+            <i class="fas fa-exclamation-triangle text-4xl text-red-600 mb-4"></i>
+            <p class="text-xl text-gray-700 mb-2">데이터베이스 연결 실패</p>
+            <p class="text-sm text-gray-600">로컬 저장소 모드로 전환됩니다. 프로젝트를 추가하면 브라우저에 저장됩니다.</p>
+            <button onclick="loadProjects()" class="mt-4 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+              다시 시도
+            </button>
+          </div>
+        `
+      }
+      projects = []
+      displayProjects()
     }
-    projects = []
-    displayProjects()
   }
 }
 
@@ -478,8 +508,19 @@ async function deleteProject(id) {
     }
   } catch (error) {
     console.error('Delete error:', error)
-    alert('프로젝트 삭제에 실패했습니다')
+    
+    // Fallback to localStorage
+    deleteFromLocalStorage(id)
+    alert('로컬 저장소에서 삭제되었습니다')
+    loadProjects()
   }
+}
+
+// Delete from localStorage
+function deleteFromLocalStorage(id) {
+  const projects = JSON.parse(localStorage.getItem('iqherb_projects') || '[]')
+  const filtered = projects.filter(p => p.id !== id)
+  localStorage.setItem('iqherb_projects', JSON.stringify(filtered))
 }
 
 // Handle form submit
@@ -512,8 +553,29 @@ async function handleProjectSubmit(e) {
     }
   } catch (error) {
     console.error('Submit error:', error)
-    alert('프로젝트 저장에 실패했습니다')
+    
+    // Fallback to localStorage if API fails
+    if (confirm('데이터베이스 연결 실패. 로컬 저장소에 임시로 저장하시겠습니까?')) {
+      saveToLocalStorage(data)
+      alert('로컬 저장소에 저장되었습니다. D1 데이터베이스를 연결하면 자동으로 동기화됩니다.')
+      closeProjectForm()
+      loadProjects()
+    }
   }
+}
+
+// Save to localStorage as fallback
+function saveToLocalStorage(data) {
+  const projects = JSON.parse(localStorage.getItem('iqherb_projects') || '[]')
+  data.id = Date.now()
+  data.created_at = new Date().toISOString()
+  projects.push(data)
+  localStorage.setItem('iqherb_projects', JSON.stringify(projects))
+}
+
+// Load from localStorage
+function loadFromLocalStorage() {
+  return JSON.parse(localStorage.getItem('iqherb_projects') || '[]')
 }
 
 // Initialize admin page
