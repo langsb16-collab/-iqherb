@@ -194,17 +194,14 @@ app.get('/', (c) => {
         <!-- Header -->
         <header class="bg-white shadow-sm sticky top-0 z-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                <div class="flex justify-between items-center">
-                    <div>
+                <div class="flex justify-center items-center">
+                    <div class="text-center">
                         <h1 class="text-2xl font-bold text-gray-900">
                             <i class="fas fa-rocket text-purple-600 mr-2"></i>
                             OpenFunding IT Hub
                         </h1>
                         <p class="text-sm text-gray-600 mt-1">프로젝트가 자본을 만나는 곳</p>
                     </div>
-                    <a href="/admin.html" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
-                        <i class="fas fa-cog mr-2"></i>관리자
-                    </a>
                 </div>
             </div>
         </header>
