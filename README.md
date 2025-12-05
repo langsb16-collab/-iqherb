@@ -30,8 +30,8 @@
 ## 주요 엔드포인트
 
 ### 웹 페이지
-- **메인 페이지**: `/` - 프로젝트 목록
-- **관리자 페이지**: `/admin.html` - 프로젝트 관리 (비밀번호 불필요)
+- **메인 페이지**: https://iqherb.org - 프로젝트 목록
+- **관리자 페이지**: https://iqherb.org/admin.html - 프로젝트 관리 (비밀번호 불필요, URL만 알면 접근)
 
 ### API 엔드포인트
 - `GET /api/projects` - 모든 활성 프로젝트 목록 조회
@@ -152,8 +152,8 @@ npm run deploy:prod
 
 ### 로컬 개발 환경
 - ✅ **실행 중**: http://localhost:3000
+- ✅ **관리자 페이지**: http://localhost:3000/admin.html
 - ✅ **API 테스트 완료**: 3개 샘플 프로젝트 로드
-- ✅ **샌드박스 URL**: https://3000-i9crqm43nfb3kkn3ut1sl-2e77fc33.sandbox.novita.ai
 
 ### GitHub
 - ✅ **저장소**: https://github.com/langsb16-collab/-iqherb
@@ -161,18 +161,19 @@ npm run deploy:prod
 - ✅ **최신 커밋**: Initial commit with full features
 
 ### Cloudflare Pages
-- ✅ **배포 완료**: https://75bf2e22.iqherb.pages.dev
+- ✅ **배포 완료**: https://d26182d2.iqherb.pages.dev
 - ✅ **프로젝트명**: iqherb
-- 🎯 **커스텀 도메인**: https://iqherb.org (연결 대기)
+- ✅ **커스텀 도메인**: https://iqherb.org (활성화 완료)
+- ⏳ **www 도메인**: https://www.iqherb.org (초기화 중)
 
 ## 향후 개발 계획
 
 🔄 **진행 예정**
 - D1 프로덕션 데이터베이스 연결 (Cloudflare 대시보드에서 수동 설정)
-- 커스텀 도메인 연결 (iqherb.org)
 - 프로젝트 상세 페이지 구현
 - 이미지 갤러리 기능
 - 댓글 및 문의 시스템
+- 프로젝트 분석 및 통계
 
 💡 **개선 가능 항목**
 - 사용자 인증 시스템 (투자자/창업자 구분)
