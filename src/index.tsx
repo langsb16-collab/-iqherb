@@ -347,18 +347,54 @@ app.get('/', (c) => {
             renderAdminPanel();
           }
 
+          function getStorageInfo() {
+            try {
+              const data = localStorage.getItem(STORAGE_KEY) || '[]';
+              const sizeInMB = (new Blob([data]).size / 1024 / 1024).toFixed(2);
+              const percentage = ((new Blob([data]).size / (5 * 1024 * 1024)) * 100).toFixed(1);
+              return { sizeInMB, percentage, projects: JSON.parse(data).length };
+            } catch (e) {
+              return { sizeInMB: '0', percentage: '0', projects: 0 };
+            }
+          }
+
+          function clearStorage() {
+            if (confirm('⚠️ 모든 프로젝트 데이터가 삭제됩니다. 계속하시겠습니까?\\n\\n(백업하지 않은 데이터는 복구할 수 없습니다)')) {
+              localStorage.removeItem(STORAGE_KEY);
+              projects = [];
+              alert('✅ 저장 공간이 초기화되었습니다.');
+              renderAdminPanel();
+            }
+          }
+
           function renderAdminPanel() {
+            const storageInfo = getStorageInfo();
+            const storageColor = storageInfo.percentage > 80 ? 'text-red-600' : storageInfo.percentage > 50 ? 'text-orange-600' : 'text-green-600';
+            
             document.getElementById('adminContent').innerHTML = \`
               <header class="bg-white shadow p-4">
-                <div class="max-w-7xl mx-auto flex justify-between items-center">
-                  <h1 class="text-2xl font-bold"><i class="fas fa-cog text-purple-600 mr-2"></i>프로젝트 관리</h1>
-                  <div class="flex gap-3">
-                    <button onclick="showForm()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-                      <i class="fas fa-plus mr-2"></i>새 프로젝트
-                    </button>
-                    <a href="/" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
-                      <i class="fas fa-home mr-2"></i>메인
-                    </a>
+                <div class="max-w-7xl mx-auto">
+                  <div class="flex justify-between items-center mb-3">
+                    <h1 class="text-2xl font-bold"><i class="fas fa-cog text-purple-600 mr-2"></i>프로젝트 관리</h1>
+                    <div class="flex gap-3">
+                      <button onclick="showForm()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                        <i class="fas fa-plus mr-2"></i>새 프로젝트
+                      </button>
+                      <button onclick="clearStorage()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                        <i class="fas fa-trash mr-2"></i>전체 삭제
+                      </button>
+                      <a href="/" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+                        <i class="fas fa-home mr-2"></i>메인
+                      </a>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-4 text-sm">
+                    <span class="font-medium">저장 공간:</span>
+                    <span class="\${storageColor} font-bold">
+                      <i class="fas fa-database mr-1"></i>\${storageInfo.sizeInMB}MB / 5MB (\${storageInfo.percentage}%)
+                    </span>
+                    <span class="text-gray-600">프로젝트: \${storageInfo.projects}개</span>
+                    \${storageInfo.percentage > 70 ? '<span class="text-red-600"><i class="fas fa-exclamation-triangle mr-1"></i>저장 공간 부족</span>' : ''}
                   </div>
                 </div>
               </header>
@@ -460,7 +496,7 @@ app.get('/', (c) => {
             editing = null;
           }
           
-          function compressImage(file, maxWidth = 600, quality = 0.4) {
+          function compressImage(file, maxWidth = 500, quality = 0.3) {
             return new Promise((resolve, reject) => {
               const reader = new FileReader();
               reader.onload = (e) => {
@@ -470,7 +506,7 @@ app.get('/', (c) => {
                   let width = img.width;
                   let height = img.height;
                   
-                  // 더 작은 크기로 리사이즈 (600px, 40% 품질)
+                  // 500px로 리사이즈 (더 작게)
                   if (width > maxWidth || height > maxWidth) {
                     if (width > height) {
                       height = (height * maxWidth) / width;
@@ -485,12 +521,11 @@ app.get('/', (c) => {
                   canvas.height = height;
                   
                   const ctx = canvas.getContext('2d');
-                  // 이미지 스무딩으로 품질 개선
                   ctx.imageSmoothingEnabled = true;
                   ctx.imageSmoothingQuality = 'high';
                   ctx.drawImage(img, 0, 0, width, height);
                   
-                  // JPEG 40% 품질로 압축 (용량 대폭 감소)
+                  // JPEG 30% 품질로 강력 압축
                   const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
                   resolve(compressedBase64);
                 };
@@ -533,23 +568,23 @@ app.get('/', (c) => {
               }
               
               try {
-                // 강력한 압축 (600px, 40% 품질)
-                const compressedBase64 = await compressImage(file, 600, 0.4);
+                // 초강력 압축 (500px, 30% 품질)
+                let compressedBase64 = await compressImage(file, 500, 0.3);
+                let sizeInKB = (compressedBase64.length * 0.75) / 1024;
                 
-                // 압축 후 크기 체크
-                const sizeInKB = (compressedBase64.length * 0.75) / 1024;
-                console.log(\`[\${file.name}] 원본: \${(file.size/1024).toFixed(0)}KB → 압축: \${sizeInKB.toFixed(0)}KB (압축률: \${((1 - sizeInKB/(file.size/1024)) * 100).toFixed(1)}%)\`);
-                
-                // 압축 후에도 너무 크면 추가 압축
-                if (sizeInKB > 300) {
-                  console.log('추가 압축 진행...');
-                  const recompressed = await compressImage(file, 500, 0.3);
-                  const newSize = (recompressed.length * 0.75) / 1024;
-                  console.log(\`재압축 완료: \${newSize.toFixed(0)}KB\`);
-                  imagesData.push(recompressed);
-                } else {
-                  imagesData.push(compressedBase64);
+                // 목표: 200KB 이하로 압축
+                let attempt = 1;
+                while (sizeInKB > 200 && attempt <= 3) {
+                  const newMaxWidth = 500 - (attempt * 100);
+                  const newQuality = 0.3 - (attempt * 0.05);
+                  console.log(\`[\${file.name}] 추가 압축 \${attempt}회: \${newMaxWidth}px, \${(newQuality*100).toFixed(0)}%\`);
+                  compressedBase64 = await compressImage(file, newMaxWidth, newQuality);
+                  sizeInKB = (compressedBase64.length * 0.75) / 1024;
+                  attempt++;
                 }
+                
+                console.log(\`[\${file.name}] 원본: \${(file.size/1024).toFixed(0)}KB → 최종: \${sizeInKB.toFixed(0)}KB (압축률: \${((1 - sizeInKB/(file.size/1024)) * 100).toFixed(1)}%)\`);
+                imagesData.push(compressedBase64);
                 
               } catch (error) {
                 console.error(\`[\${file.name}] 이미지 처리 실패:\`, error);
