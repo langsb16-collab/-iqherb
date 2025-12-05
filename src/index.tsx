@@ -21,19 +21,33 @@ app.use('/static/*', serveStatic({ root: './public' }))
 // Get all projects
 app.get('/api/projects', async (c) => {
   try {
+    // Check if DB is available
+    if (!c.env.DB) {
+      return c.json({ 
+        success: true, 
+        data: [],
+        message: 'Database not configured. Please add projects through the admin panel after connecting D1.'
+      })
+    }
+    
     const { results } = await c.env.DB.prepare(
       'SELECT * FROM projects WHERE status = ? ORDER BY created_at DESC'
     ).bind('active').all()
     
     return c.json({ success: true, data: results })
   } catch (error) {
-    return c.json({ success: false, error: 'Failed to fetch projects' }, 500)
+    console.error('DB error:', error)
+    return c.json({ success: true, data: [], message: 'Database connection issue' })
   }
 })
 
 // Get single project by ID
 app.get('/api/projects/:id', async (c) => {
   try {
+    if (!c.env.DB) {
+      return c.json({ success: false, error: 'Database not configured' }, 500)
+    }
+    
     const id = c.req.param('id')
     const { results } = await c.env.DB.prepare(
       'SELECT * FROM projects WHERE id = ?'
@@ -50,13 +64,18 @@ app.get('/api/projects/:id', async (c) => {
     
     return c.json({ success: true, data: results[0] })
   } catch (error) {
-    return c.json({ success: false, error: 'Failed to fetch project' }, 500)
+    console.error('DB error:', error)
+    return c.json({ success: false, error: 'Database connection issue' }, 500)
   }
 })
 
 // Create new project
 app.post('/api/projects', async (c) => {
   try {
+    if (!c.env.DB) {
+      return c.json({ success: false, error: 'Database not configured. Please connect D1 database first.' }, 500)
+    }
+    
     const body = await c.req.json()
     
     const result = await c.env.DB.prepare(`
@@ -95,13 +114,17 @@ app.post('/api/projects', async (c) => {
     })
   } catch (error) {
     console.error('Create project error:', error)
-    return c.json({ success: false, error: 'Failed to create project' }, 500)
+    return c.json({ success: false, error: 'Failed to create project. Database error.' }, 500)
   }
 })
 
 // Update project
 app.put('/api/projects/:id', async (c) => {
   try {
+    if (!c.env.DB) {
+      return c.json({ success: false, error: 'Database not configured' }, 500)
+    }
+    
     const id = c.req.param('id')
     const body = await c.req.json()
     
@@ -148,6 +171,10 @@ app.put('/api/projects/:id', async (c) => {
 // Delete project
 app.delete('/api/projects/:id', async (c) => {
   try {
+    if (!c.env.DB) {
+      return c.json({ success: false, error: 'Database not configured' }, 500)
+    }
+    
     const id = c.req.param('id')
     
     await c.env.DB.prepare(
@@ -156,6 +183,7 @@ app.delete('/api/projects/:id', async (c) => {
     
     return c.json({ success: true })
   } catch (error) {
+    console.error('Delete project error:', error)
     return c.json({ success: false, error: 'Failed to delete project' }, 500)
   }
 })
