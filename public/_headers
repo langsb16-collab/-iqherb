@@ -1,7 +1,12 @@
-/static/*
+/*
   Access-Control-Allow-Origin: *
-  X-Robots-Tag: none
-  Cache-Control: public, max-age=31536000
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
 
 /admin.html
   X-Robots-Tag: noindex
+  Cache-Control: no-cache
+
+/admin-standalone.html
+  X-Robots-Tag: noindex
+  Cache-Control: no-cache

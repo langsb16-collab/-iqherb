@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>관리자 페이지 - OpenFunding IT Hub</title>
+    <title>프로젝트 관리 - OpenFunding IT Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100">
     <div id="app"></div>
     <script>
-const STORAGE_KEY = 'iqherb_projects';
-let projects = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+let projects = JSON.parse(localStorage.getItem('iqherb_projects') || '[]');
 let editing = null;
 
 function render() {
@@ -144,7 +143,7 @@ function save(e) {
     data.created_at = new Date().toISOString();
     projects.push(data);
   }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+  localStorage.setItem('iqherb_projects', JSON.stringify(projects));
   alert(editing ? '수정되었습니다' : '추가되었습니다');
   closeForm();
   render();
@@ -163,7 +162,7 @@ function edit(id) {
 function del(id) {
   if (!confirm('삭제하시겠습니까?')) return;
   projects = projects.filter(p => p.id !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+  localStorage.setItem('iqherb_projects', JSON.stringify(projects));
   alert('삭제되었습니다');
   render();
 }
