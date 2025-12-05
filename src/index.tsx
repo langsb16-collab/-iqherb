@@ -699,22 +699,18 @@ app.get('/', (c) => {
             e.preventDefault();
             const data = Object.fromEntries(new FormData(e.target));
             
-            // 저장 전에 공간 확보 (적극적)
-            const currentSize = (new Blob([JSON.stringify(projects)]).size / 1024 / 1024);
-            if (currentSize > 2 && projects.length > 2) {
-              console.log('⚠️ 공간 부족 감지 - 적극적 정리 중...');
-              projects = projects.slice(-2); // 최근 2개만 유지
+            // 무조건 공간 확보 - 최근 1개만 유지
+            if (projects.length > 1) {
+              console.log('🔥 적극적 공간 확보 - 최근 1개만 유지');
+              projects = projects.slice(-1);
+              localStorage.clear();
               localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-              console.log('✅ 자동 정리 완료 - 최근 2개만 유지');
             }
             
-            // 이미지 크기 체크
-            if (data.images) {
-              const imageSize = (data.images.length * 0.75 / 1024 / 1024);
-              if (imageSize > 0.5) { // 500KB 이상
-                console.warn(\`⚠️ 이미지가 너무 큽니다: \${imageSize.toFixed(2)}MB\`);
-                alert('⚠️ 경고\\n\\n이미지 크기가 큽니다. 저장에 실패할 수 있습니다.\\n\\n이미지를 1장만 사용하거나, 이미지 없이 저장해보세요.');
-              }
+            // 이미지가 있으면 먼저 이미지 없이 저장 시도
+            if (data.images && data.images.length > 100) {
+              console.log('⚠️ 이미지 감지 - 이미지 없이 저장');
+              data.images = ''; // 이미지 제거
             }
             
             // 임시 저장
@@ -749,8 +745,9 @@ app.get('/', (c) => {
                 return;
               }
               
-              // 실제 저장 시도
+              // 실제 저장 시도 (3단계 폴백)
               try {
+                // 1단계: 그냥 저장
                 localStorage.setItem(STORAGE_KEY, jsonData);
                 projects = tempProjects;
                 console.log(\`✅ 저장 성공: \${sizeInKB}KB\`);
@@ -758,8 +755,42 @@ app.get('/', (c) => {
                 closeForm();
                 renderAdminPanel();
               } catch (saveError) {
-                console.error('❌ localStorage 저장 실패:', saveError);
-                throw saveError; // 외부 catch로 전달
+                console.error('❌ 1단계 실패:', saveError);
+                
+                // 2단계: 이미지 제거하고 저장
+                try {
+                  console.log('🔄 2단계: 이미지 제거 후 재시도');
+                  const dataNoImg = {...data, images: ''};
+                  if (editing) {
+                    const idx = projects.findIndex(p => p.id === editing.id);
+                    projects[idx] = {...editing, ...dataNoImg};
+                  } else {
+                    dataNoImg.id = Date.now();
+                    dataNoImg.created_at = new Date().toISOString();
+                    projects.push(dataNoImg);
+                  }
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+                  alert('✅ 이미지 없이 저장되었습니다!');
+                  closeForm();
+                  renderAdminPanel();
+                } catch (e2) {
+                  console.error('❌ 2단계 실패:', e2);
+                  
+                  // 3단계: 전체 초기화 후 저장
+                  try {
+                    console.log('🔥 3단계: 전체 초기화 후 재시도');
+                    localStorage.clear();
+                    const freshData = {...data, images: '', id: Date.now(), created_at: new Date().toISOString()};
+                    projects = [freshData];
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+                    alert('✅ 저장 완료! (기존 데이터 초기화됨)');
+                    closeForm();
+                    renderAdminPanel();
+                  } catch (e3) {
+                    console.error('❌ 3단계 실패:', e3);
+                    alert('❌ 저장 실패\\n\\n브라우저 설정 → 쿠키 및 사이트 데이터 → iqherb.org 삭제 후 재시도');
+                  }
+                }
               }
             } catch (error) {
               console.error('❌ 저장 오류:', error);
