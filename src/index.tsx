@@ -731,12 +731,39 @@ app.get('/', (c) => {
             e.preventDefault();
             const data = Object.fromEntries(new FormData(e.target));
             
-            // 무조건 공간 확보 - 최근 1개만 유지
+            // ✅ STEP 0: 적극적 공간 확보 (최근 1개만 유지)  ⭐ 예외 처리 포함 버전
             if (projects.length > 1) {
-              console.log('🔥 적극적 공간 확보 - 최근 1개만 유지');
-              projects = projects.slice(-1);
-              localStorage.clear();
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+              try {
+                console.log('🔥 적극적 공간 확보 - 최근 1개만 유지');
+                projects = projects.slice(-1);
+
+                // 기존 데이터 전부 지우고
+                localStorage.clear();
+
+                // 최근 1개만 다시 저장 (용량 매우 작아짐)
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+              } catch (err) {
+                console.error('STEP 0 저장소 초기화 중 오류:', err);
+
+                if (
+                  err.name === 'QuotaExceededError' ||
+                  err.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+                  err.code === 22 ||       // Chrome/Edge
+                  err.code === 1014        // Firefox
+                ) {
+                  alert(
+                    '🚨 브라우저 저장 공간이 가득 차서\\n' +
+                    '기존 데이터 정리 중 오류가 발생했습니다.\\n\\n' +
+                    '브라우저 설정 → 쿠키 및 사이트 데이터에서\\n' +
+                    'iqherb.org 데이터를 삭제한 뒤 다시 시도해 주세요.'
+                  );
+                } else {
+                  alert('저장소 초기화 중 오류: ' + err.message);
+                }
+
+                // STEP 0 에서 이미 문제가 난 상태이므로 저장 로직 중단
+                return;
+              }
             }
             
             // 이미지가 있으면 먼저 이미지 없이 저장 시도
