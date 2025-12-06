@@ -14,7 +14,12 @@ export default defineConfig({
   publicDir: 'public',
   build: {
     outDir: 'dist',
-    emptyOutDir: false,
-    copyPublicDir: true
+    emptyOutDir: true, // Changed to true to ensure clean build
+    copyPublicDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
+      }
+    }
   }
 })
