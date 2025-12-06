@@ -288,3 +288,4 @@ webapp/
 ---
 
 **프로젝트가 자본을 만나는 곳** - OpenFunding IT Hub
+# Backup created: Sat Dec  6 07:52:42 UTC 2025
