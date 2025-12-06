@@ -528,7 +528,12 @@ app.get('/', (c) => {
                       </div>
                       
                       <div><label class="block text-sm font-medium mb-2">유튜브 링크</label>
-                      <input type="url" name="youtube_link" placeholder="https://youtube.com/watch?v=..." class="w-full border rounded px-4 py-2"></div>
+                      <input type="url" name="youtube_link" id="youtubeLink" placeholder="https://youtube.com/watch?v=..." class="w-full border rounded px-4 py-2" oninput="updateYoutubeThumbnail()">
+                      <div id="youtubeThumbnailPreview" class="mt-3 hidden">
+                        <p class="text-sm text-gray-600 mb-2">썸네일 미리보기:</p>
+                        <img id="youtubeThumbnailImg" src="" class="w-full max-w-md h-48 object-cover rounded-lg border">
+                      </div>
+                      </div>
                       
                       <div class="flex gap-3 justify-end pt-4 border-t">
                         <button type="button" onclick="closeForm()" class="px-6 py-2 border rounded">취소</button>
@@ -575,9 +580,11 @@ app.get('/', (c) => {
             const formTitle = document.getElementById('formTitle');
             const form = document.getElementById('form');
             const modal = document.getElementById('modal');
+            const preview = document.getElementById('youtubeThumbnailPreview');
             
             if (formTitle) formTitle.textContent = '새 프로젝트';
             if (form) form.reset();
+            if (preview) preview.classList.add('hidden');
             if (modal) modal.classList.remove('hidden');
           }
 
@@ -591,6 +598,24 @@ app.get('/', (c) => {
             if (!url) return null;
             const match = url.match(/(?:youtube\\.com\\/watch\\?v=|youtu\\.be\\/)([^&\\s]+)/);
             return match ? match[1] : null;
+          }
+          
+          function updateYoutubeThumbnail() {
+            const input = document.getElementById('youtubeLink');
+            const preview = document.getElementById('youtubeThumbnailPreview');
+            const img = document.getElementById('youtubeThumbnailImg');
+            
+            if (!input || !preview || !img) return;
+            
+            const url = input.value;
+            const videoId = getYouTubeVideoId(url);
+            
+            if (videoId) {
+              img.src = \`https://img.youtube.com/vi/\${videoId}/maxresdefault.jpg\`;
+              preview.classList.remove('hidden');
+            } else {
+              preview.classList.add('hidden');
+            }
           }
 
           function save(e) {
@@ -629,6 +654,9 @@ app.get('/', (c) => {
                 if (form.elements[k]) form.elements[k].value = editing[k] || '';
               });
             }
+            
+            // 유튜브 썸네일 미리보기 업데이트
+            updateYoutubeThumbnail();
             
             if (modal) modal.classList.remove('hidden');
           }
