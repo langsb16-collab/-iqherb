@@ -556,6 +556,8 @@ app.get('/', (c) => {
         <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
         <script>
           const STORAGE_KEY = 'iqherb_projects';
+          const ANNOUNCEMENTS_KEY = 'iqherb_announcements';
+          const NEWS_KEY = 'iqherb_news';
           const MAX_PROJECTS = 20; // 최대 20개까지만 보관
           
           // QuotaExceededError 방지용 래퍼 함수
@@ -1246,8 +1248,8 @@ app.get('/', (c) => {
           
           async function loadAnnouncements() {
             try {
-              const response = await axios.get('/api/announcements');
-              const announcements = response.data.data || [];
+              // localStorage에서 공지 로드
+              const announcements = JSON.parse(localStorage.getItem(ANNOUNCEMENTS_KEY) || '[]');
               
               const content = document.getElementById('announcementsContent');
               if (announcements.length === 0) {
@@ -1319,8 +1321,8 @@ app.get('/', (c) => {
           
           async function editAnnouncement(id) {
             try {
-              const response = await axios.get('/api/announcements');
-              editingAnnouncement = response.data.data.find(a => a.id === id);
+              const announcements = JSON.parse(localStorage.getItem(ANNOUNCEMENTS_KEY) || '[]');
+              editingAnnouncement = announcements.find(a => a.id === id);
               
               const html = \`
                 <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target===this) closeAnnouncementForm()">
@@ -1363,20 +1365,39 @@ app.get('/', (c) => {
           async function saveAnnouncement(event) {
             event.preventDefault();
             const form = event.target;
-            const data = {
-              title: form.title.value,
-              content: form.content.value,
-              image_url: form.image_url.value
-            };
             
             try {
+              const announcements = JSON.parse(localStorage.getItem(ANNOUNCEMENTS_KEY) || '[]');
+              
               if (editingAnnouncement) {
-                await axios.put(\`/api/announcements/\${editingAnnouncement.id}\`, data);
+                // 수정
+                const index = announcements.findIndex(a => a.id === editingAnnouncement.id);
+                if (index !== -1) {
+                  announcements[index] = {
+                    ...announcements[index],
+                    title: form.title.value,
+                    content: form.content.value,
+                    image_url: form.image_url.value,
+                    updated_at: new Date().toISOString()
+                  };
+                }
                 alert('공지가 수정되었습니다');
               } else {
-                await axios.post('/api/announcements', data);
+                // 새로 등록
+                const newAnnouncement = {
+                  id: Date.now(),
+                  title: form.title.value,
+                  content: form.content.value,
+                  image_url: form.image_url.value,
+                  status: 'active',
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                };
+                announcements.push(newAnnouncement);
                 alert('공지가 등록되었습니다');
               }
+              
+              localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(announcements));
               closeAnnouncementForm();
               loadAnnouncements();
               loadAnnouncementsMain();
@@ -1389,7 +1410,9 @@ app.get('/', (c) => {
             if (!confirm('이 공지를 삭제하시겠습니까?')) return;
             
             try {
-              await axios.delete(\`/api/announcements/\${id}\`);
+              let announcements = JSON.parse(localStorage.getItem(ANNOUNCEMENTS_KEY) || '[]');
+              announcements = announcements.filter(a => a.id !== id);
+              localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(announcements));
               alert('공지가 삭제되었습니다');
               loadAnnouncements();
               loadAnnouncementsMain();
@@ -1411,8 +1434,7 @@ app.get('/', (c) => {
           
           async function loadNews() {
             try {
-              const response = await axios.get('/api/news');
-              const newsList = response.data.data || [];
+              const newsList = JSON.parse(localStorage.getItem(NEWS_KEY) || '[]');
               
               const content = document.getElementById('newsContent');
               if (newsList.length === 0) {
@@ -1494,8 +1516,8 @@ app.get('/', (c) => {
           
           async function editNews(id) {
             try {
-              const response = await axios.get('/api/news');
-              editingNews = response.data.data.find(n => n.id === id);
+              const newsList = JSON.parse(localStorage.getItem(NEWS_KEY) || '[]');
+              editingNews = newsList.find(n => n.id === id);
               
               const html = \`
                 <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target===this) closeNewsForm()">
@@ -1538,20 +1560,39 @@ app.get('/', (c) => {
           async function saveNews(event) {
             event.preventDefault();
             const form = event.target;
-            const data = {
-              title: form.title.value,
-              youtube_link: form.youtube_link.value,
-              description: form.description.value
-            };
             
             try {
+              const newsList = JSON.parse(localStorage.getItem(NEWS_KEY) || '[]');
+              
               if (editingNews) {
-                await axios.put(\`/api/news/\${editingNews.id}\`, data);
+                // 수정
+                const index = newsList.findIndex(n => n.id === editingNews.id);
+                if (index !== -1) {
+                  newsList[index] = {
+                    ...newsList[index],
+                    title: form.title.value,
+                    youtube_link: form.youtube_link.value,
+                    description: form.description.value,
+                    updated_at: new Date().toISOString()
+                  };
+                }
                 alert('참고뉴스가 수정되었습니다');
               } else {
-                await axios.post('/api/news', data);
+                // 새로 등록
+                const newNews = {
+                  id: Date.now(),
+                  title: form.title.value,
+                  youtube_link: form.youtube_link.value,
+                  description: form.description.value,
+                  status: 'active',
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                };
+                newsList.push(newNews);
                 alert('참고뉴스가 등록되었습니다');
               }
+              
+              localStorage.setItem(NEWS_KEY, JSON.stringify(newsList));
               closeNewsForm();
               loadNews();
               loadNewsMain();
@@ -1564,7 +1605,9 @@ app.get('/', (c) => {
             if (!confirm('이 참고뉴스를 삭제하시겠습니까?')) return;
             
             try {
-              await axios.delete(\`/api/news/\${id}\`);
+              let newsList = JSON.parse(localStorage.getItem(NEWS_KEY) || '[]');
+              newsList = newsList.filter(n => n.id !== id);
+              localStorage.setItem(NEWS_KEY, JSON.stringify(newsList));
               alert('참고뉴스가 삭제되었습니다');
               loadNews();
               loadNewsMain();
@@ -1584,8 +1627,7 @@ app.get('/', (c) => {
           // ============================================
           async function loadAnnouncementsMain() {
             try {
-              const response = await axios.get('/api/announcements');
-              const announcements = response.data.data || [];
+              const announcements = JSON.parse(localStorage.getItem(ANNOUNCEMENTS_KEY) || '[]');
               
               const container = document.getElementById('announcementsContainer');
               const empty = document.getElementById('announcementsEmpty');
@@ -1611,8 +1653,7 @@ app.get('/', (c) => {
           
           async function loadNewsMain() {
             try {
-              const response = await axios.get('/api/news');
-              const newsList = response.data.data || [];
+              const newsList = JSON.parse(localStorage.getItem(NEWS_KEY) || '[]');
               
               const container = document.getElementById('newsContainer');
               const empty = document.getElementById('newsEmpty');
