@@ -413,6 +413,7 @@ app.get('/', (c) => {
         <title>OpenFunding IT Hub</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <script src="/static/i18n.js"></script>
         <style>
           body { font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
           .hero-gradient { background: linear-gradient(135deg, #a855f7 0%, #c026d3 100%); }
@@ -431,13 +432,30 @@ app.get('/', (c) => {
         <!-- Header -->
         <header class="bg-white shadow-sm sticky top-0 z-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-                <div class="flex justify-center items-center">
+                <div class="flex justify-between items-center">
+                    <div class="flex-1"></div>
                     <div class="text-center">
                         <h1 class="text-lg sm:text-xl font-bold text-gray-900">
                             <i class="fas fa-rocket text-purple-600 mr-1"></i>
-                            OpenFunding IT Hub
+                            <span id="siteTitle" data-i18n="siteTitle">OpenFunding IT Hub</span>
                         </h1>
-                        <p class="text-xs text-gray-600 mt-0.5">프로젝트가 자본을 만나는 곳</p>
+                        <p class="text-xs text-gray-600 mt-0.5" id="siteSubtitle" data-i18n="siteSubtitle">프로젝트가 자본을 만나는 곳</p>
+                    </div>
+                    <div class="flex-1 flex justify-end">
+                        <div class="relative">
+                            <select id="languageSelector" 
+                                    class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer"
+                                    onchange="changeLanguage(this.value)">
+                                <option value="ko">🇰🇷 한국어</option>
+                                <option value="en">🇺🇸 English</option>
+                                <option value="zh">🇨🇳 中文</option>
+                                <option value="ja">🇯🇵 日本語</option>
+                                <option value="de">🇩🇪 Deutsch</option>
+                                <option value="es">🇪🇸 Español</option>
+                                <option value="fr">🇫🇷 Français</option>
+                                <option value="ar">🇸🇦 العربية</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -446,21 +464,21 @@ app.get('/', (c) => {
         <!-- Hero Section - Mobile Optimized (50% reduced) -->
         <section class="hero-gradient text-white py-3 sm:py-6">
             <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 text-center">
-                <h2 class="text-base sm:text-xl md:text-2xl font-bold mb-1.5 leading-tight">
+                <h2 class="text-base sm:text-xl md:text-2xl font-bold mb-1.5 leading-tight" data-i18n="heroTitle">
                     Code your vision,<br>build your future
                 </h2>
-                <p class="text-xs sm:text-sm md:text-base mb-3 opacity-90">
+                <p class="text-xs sm:text-sm md:text-base mb-3 opacity-90" data-i18n="heroSubtitle">
                     개발자, 전략적 투자자 조달 허브
                 </p>
                 <div class="flex flex-wrap justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
                     <div class="bg-white/20 backdrop-blur-sm px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full whitespace-nowrap">
-                        <i class="fas fa-hand-holding-usd mr-0.5 text-xs"></i>투자
+                        <i class="fas fa-hand-holding-usd mr-0.5 text-xs"></i><span data-i18n="fundingTypeInvestment">투자</span>
                     </div>
                     <div class="bg-white/20 backdrop-blur-sm px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full whitespace-nowrap">
-                        <i class="fas fa-chart-line mr-0.5 text-xs"></i>수익분배
+                        <i class="fas fa-chart-line mr-0.5 text-xs"></i><span data-i18n="fundingTypeRevenue">수익분배</span>
                     </div>
                     <div class="bg-white/20 backdrop-blur-sm px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full whitespace-nowrap">
-                        <i class="fas fa-coins mr-0.5 text-xs"></i>창업희망
+                        <i class="fas fa-coins mr-0.5 text-xs"></i><span data-i18n="fundingTypeStartup">창업희망</span>
                     </div>
                 </div>
             </div>
@@ -470,12 +488,12 @@ app.get('/', (c) => {
         <section class="bg-yellow-50 border-b border-yellow-200">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                 <h3 class="text-lg font-bold text-gray-900 mb-3 flex items-center">
-                    <i class="fas fa-bullhorn text-yellow-600 mr-2"></i>공지
+                    <i class="fas fa-bullhorn text-yellow-600 mr-2"></i><span data-i18n="announcementsTitle">공지</span>
                 </h3>
                 <div id="announcementsContainer" class="space-y-3">
                     <!-- Announcements will be loaded here -->
                 </div>
-                <div id="announcementsEmpty" class="hidden text-center text-gray-500 text-sm py-4">
+                <div id="announcementsEmpty" class="hidden text-center text-gray-500 text-sm py-4" data-i18n="noAnnouncements">
                     등록된 공지가 없습니다
                 </div>
             </div>
@@ -485,12 +503,12 @@ app.get('/', (c) => {
         <section class="bg-blue-50 border-b border-blue-200">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                 <h3 class="text-lg font-bold text-gray-900 mb-3 flex items-center">
-                    <i class="fas fa-newspaper text-blue-600 mr-2"></i>참고뉴스
+                    <i class="fas fa-newspaper text-blue-600 mr-2"></i><span data-i18n="newsTitle">참고뉴스</span>
                 </h3>
                 <div id="newsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <!-- News will be loaded here -->
                 </div>
-                <div id="newsEmpty" class="hidden text-center text-gray-500 text-sm py-4">
+                <div id="newsEmpty" class="hidden text-center text-gray-500 text-sm py-4" data-i18n="noNews">
                     등록된 참고뉴스가 없습니다
                 </div>
             </div>
@@ -501,25 +519,25 @@ app.get('/', (c) => {
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
                 <div class="flex flex-wrap gap-2 items-center text-xs sm:text-sm">
                     <div class="flex items-center gap-1">
-                        <label class="font-medium text-gray-700">자금:</label>
+                        <label class="font-medium text-gray-700" data-i18n="filterFunding">자금:</label>
                         <select id="filterFunding" class="border border-gray-300 rounded-lg px-2 py-1 text-xs">
-                            <option value="">전체</option>
-                            <option value="투자">투자</option>
-                            <option value="수익분배">수익분배</option>
-                            <option value="창업희망">창업희망</option>
+                            <option value="" data-i18n="filterAll">전체</option>
+                            <option value="투자" data-i18n="fundingTypeInvestment">투자</option>
+                            <option value="수익분배" data-i18n="fundingTypeRevenue">수익분배</option>
+                            <option value="창업희망" data-i18n="fundingTypeStartup">창업희망</option>
                         </select>
                     </div>
                     <div class="flex items-center gap-1">
-                        <label class="font-medium text-gray-700">정렬:</label>
+                        <label class="font-medium text-gray-700" data-i18n="filterSort">정렬:</label>
                         <select id="sortBy" class="border border-gray-300 rounded-lg px-2 py-1 text-xs">
-                            <option value="latest">최신순</option>
-                            <option value="amount_desc">금액↓</option>
-                            <option value="amount_asc">금액↑</option>
-                            <option value="views">조회수</option>
+                            <option value="latest" data-i18n="sortLatest">최신순</option>
+                            <option value="amount_desc" data-i18n="sortAmountDesc">금액↓</option>
+                            <option value="amount_asc" data-i18n="sortAmountAsc">금액↑</option>
+                            <option value="views" data-i18n="sortViews">조회수</option>
                         </select>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <input type="text" id="searchInput" placeholder="검색..." 
+                        <input type="text" id="searchInput" placeholder="검색..." data-i18n="searchPlaceholder"
                                class="border border-gray-300 rounded-lg px-2 py-1 w-full text-xs">
                     </div>
                 </div>
@@ -533,19 +551,19 @@ app.get('/', (c) => {
             </div>
             <div id="loadingIndicator" class="text-center py-8">
                 <i class="fas fa-spinner fa-spin text-3xl text-purple-600"></i>
-                <p class="mt-3 text-gray-600 text-sm">프로젝트를 불러오는 중...</p>
+                <p class="mt-3 text-gray-600 text-sm" data-i18n="loading">프로젝트를 불러오는 중...</p>
             </div>
             <div id="emptyState" class="hidden text-center py-8">
                 <i class="fas fa-inbox text-4xl text-gray-300 mb-3"></i>
-                <p class="text-base text-gray-600">등록된 프로젝트가 없습니다</p>
+                <p class="text-base text-gray-600" data-i18n="noProjects">등록된 프로젝트가 없습니다</p>
             </div>
         </section>
 
         <!-- Footer -->
         <footer class="bg-gray-800 text-white py-4 mt-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <p class="text-sm font-semibold mb-1">프로젝트가 자본을 만나는 곳</p>
-                <p class="text-xs text-gray-400">© 2024 OpenFunding IT Hub. All rights reserved.</p>
+                <p class="text-sm font-semibold mb-1" data-i18n="footerTagline">프로젝트가 자본을 만나는 곳</p>
+                <p class="text-xs text-gray-400" data-i18n="footerCopyright">© 2024 OpenFunding IT Hub. All rights reserved.</p>
             </div>
         </footer>
         </div>
