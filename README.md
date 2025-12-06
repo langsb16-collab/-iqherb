@@ -172,13 +172,16 @@ npx wrangler pages deploy dist --project-name iqherb
 ### GitHub
 - ✅ **저장소**: https://github.com/langsb16-collab/-iqherb
 - ✅ **브랜치**: main
-- ✅ **최신 커밋**: Fix mobile sync - localStorage와 API 동기화 추가
+- ✅ **최신 커밋**: Add export/import feature for cross-device data sync
 
 ### Cloudflare Pages
-- ✅ **배포 완료**: https://d26182d2.iqherb.pages.dev
+- ✅ **최신 배포**: https://939f193f.iqherb.pages.dev (2025-12-06)
 - ✅ **프로젝트명**: iqherb
 - ✅ **커스텀 도메인**: https://iqherb.org (활성화 완료)
-- ⏳ **www 도메인**: https://www.iqherb.org (초기화 중)
+- ✅ **주요 업데이트**: 
+  - "대출희망" → "창업희망" 변경
+  - 데이터 내보내기/가져오기 기능 추가
+  - PC-모바일 간 데이터 동기화 완벽 지원
 
 ## 향후 개발 계획
 
