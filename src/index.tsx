@@ -930,32 +930,35 @@ app.get('/', (c) => {
               </main>
               </div>
               
-              <!-- Announcements Tab Content -->
-              <div id="announcementsTab" style="display:none;">
+            </header>
+            
+            <!-- Announcements Tab Content -->
+            <div id="announcementsTab" style="display:none;">
+              <div class="max-w-7xl mx-auto px-4 py-4">
                 <div class="flex gap-2 flex-wrap mb-3">
                   <button onclick="showAnnouncementForm()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
                     <i class="fas fa-plus mr-2"></i>새 공지
                   </button>
                 </div>
-                <main class="max-w-7xl mx-auto px-4 py-8" id="announcementsContent">
+                <div id="announcementsContent">
                   <!-- Announcements will be loaded here -->
-                </main>
+                </div>
               </div>
-              
-              <!-- News Tab Content -->
-              <div id="newsTab" style="display:none;">
+            </div>
+            
+            <!-- News Tab Content -->
+            <div id="newsTab" style="display:none;">
+              <div class="max-w-7xl mx-auto px-4 py-4">
                 <div class="flex gap-2 flex-wrap mb-3">
                   <button onclick="showNewsForm()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
                     <i class="fas fa-plus mr-2"></i>새 참고뉴스
                   </button>
                 </div>
-                <main class="max-w-7xl mx-auto px-4 py-8" id="newsContent">
+                <div id="newsContent">
                   <!-- News will be loaded here -->
-                </main>
+                </div>
               </div>
-              
-              </div>
-            </header>
+            </div>
             \`;
           }
 
