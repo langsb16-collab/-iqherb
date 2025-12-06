@@ -1710,7 +1710,10 @@ app.get('/', (c) => {
           // ============================================
           async function loadAnnouncementsMain() {
             try {
-              const announcements = JSON.parse(localStorage.getItem(ANNOUNCEMENTS_KEY) || '[]');
+              // API에서 공지 데이터 가져오기
+              const response = await fetch('/api/announcements');
+              const result = await response.json();
+              const announcements = result.success ? result.data : [];
               
               const container = document.getElementById('announcementsContainer');
               const empty = document.getElementById('announcementsEmpty');
@@ -1736,7 +1739,10 @@ app.get('/', (c) => {
           
           async function loadNewsMain() {
             try {
-              const newsList = JSON.parse(localStorage.getItem(NEWS_KEY) || '[]');
+              // API에서 참고뉴스 데이터 가져오기
+              const response = await fetch('/api/news');
+              const result = await response.json();
+              const newsList = result.success ? result.data : [];
               
               const container = document.getElementById('newsContainer');
               const empty = document.getElementById('newsEmpty');
