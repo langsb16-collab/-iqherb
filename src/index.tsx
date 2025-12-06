@@ -848,13 +848,14 @@ app.get('/', (c) => {
                         <i class="fas fa-trash mr-2"></i>전체 삭제
                       </button>
                     </div>
-                  <div class="flex items-center gap-4 text-sm">
-                    <span class="font-medium">저장 공간:</span>
-                    <span class="\${storageColor} font-bold">
-                      <i class="fas fa-database mr-1"></i>\${storageInfo.sizeInMB}MB / 5MB (\${storageInfo.percentage}%)
-                    </span>
-                    <span class="text-gray-600">프로젝트: \${storageInfo.projects}개</span>
-                    \${storageInfo.percentage > 70 ? '<span class="text-red-600"><i class="fas fa-exclamation-triangle mr-1"></i>저장 공간 부족</span>' : ''}
+                    <div class="flex items-center gap-4 text-sm">
+                      <span class="font-medium">저장 공간:</span>
+                      <span class="\${storageColor} font-bold">
+                        <i class="fas fa-database mr-1"></i>\${storageInfo.sizeInMB}MB / 5MB (\${storageInfo.percentage}%)
+                      </span>
+                      <span class="text-gray-600">프로젝트: \${storageInfo.projects}개</span>
+                      \${storageInfo.percentage > 70 ? '<span class="text-red-600"><i class="fas fa-exclamation-triangle mr-1"></i>저장 공간 부족</span>' : ''}
+                    </div>
                   </div>
                 </div>
               </header>
