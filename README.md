@@ -222,7 +222,7 @@ npx wrangler pages deploy dist --project-name iqherb
 - ✅ **최신 커밋**: Add export/import feature for cross-device data sync
 
 ### Cloudflare Pages
-- ✅ **최신 배포**: https://c919604b.iqherb.pages.dev (2025-12-06)
+- ✅ **최신 배포**: https://iqherb.org (2024-12-06 Updated)
 - ✅ **프로덕션**: https://iqherb.org (활성화 완료)
 - ✅ **프로젝트명**: iqherb
 - ✅ **주요 업데이트**: 
