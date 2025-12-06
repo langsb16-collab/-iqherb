@@ -443,10 +443,35 @@ app.get('/', (c) => {
           let projects = initializeStorage();
           let editing = null;
 
+          // localStorage 데이터를 API로 동기화
+          async function syncToAPI() {
+            if (projects.length === 0) return;
+            
+            try {
+              console.log('🔄 Syncing', projects.length, 'projects to API...');
+              
+              for (const project of projects) {
+                try {
+                  // API에 프로젝트 존재 여부 확인하지 않고 바로 생성
+                  await axios.post('/api/projects', project);
+                  console.log('✅ Synced:', project.title);
+                } catch (error) {
+                  console.warn('⚠️ Sync failed for:', project.title, error);
+                }
+              }
+              
+              console.log('✅ Sync complete!');
+            } catch (error) {
+              console.error('❌ Sync error:', error);
+            }
+          }
+
           function loadPage() {
             const hash = window.location.hash;
             if (hash === '#/admin' || hash === '#admin') {
               showAdminPage();
+              // 관리자 페이지 로드 시 자동 동기화
+              syncToAPI();
             } else {
               showMainPage();
             }
