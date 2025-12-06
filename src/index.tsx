@@ -596,20 +596,42 @@ app.get('/', (c) => {
             return match ? match[1] : null;
           }
 
-          function save(e) {
+          async function save(e) {
             e.preventDefault();
             const data = Object.fromEntries(new FormData(e.target));
             
-            if (editing) {
-              const idx = projects.findIndex(p => p.id === editing.id);
-              projects[idx] = {...editing, ...data};
-            } else {
-              data.id = Date.now();
-              data.created_at = new Date().toISOString();
-              projects.push(data);
-            }
-            
             try {
+              if (editing) {
+                // 수정 모드
+                const idx = projects.findIndex(p => p.id === editing.id);
+                projects[idx] = {...editing, ...data};
+                
+                // API에 수정 요청 (선택적)
+                try {
+                  await axios.put(\`/api/projects/\${editing.id}\`, data);
+                } catch (apiError) {
+                  console.warn('API 수정 실패, localStorage만 사용:', apiError);
+                }
+              } else {
+                // 새 프로젝트
+                data.id = Date.now();
+                data.created_at = new Date().toISOString();
+                
+                // API에 생성 요청 시도
+                try {
+                  const response = await axios.post('/api/projects', data);
+                  if (response.data && response.data.success && response.data.data && response.data.data.id) {
+                    // API에서 생성된 ID 사용
+                    data.id = response.data.data.id;
+                  }
+                } catch (apiError) {
+                  console.warn('API 생성 실패, localStorage만 사용:', apiError);
+                }
+                
+                projects.push(data);
+              }
+              
+              // localStorage에 저장
               safeSetItem(STORAGE_KEY, JSON.stringify(projects));
               alert(editing ? '✅ 수정되었습니다' : '✅ 추가되었습니다');
               closeForm();
@@ -636,12 +658,26 @@ app.get('/', (c) => {
             if (modal) modal.classList.remove('hidden');
           }
 
-          function del(id) {
+          async function del(id) {
             if (!confirm('삭제하시겠습니까?')) return;
-            projects = projects.filter(p => p.id !== id);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-            alert('삭제되었습니다');
-            renderAdminPanel();
+            
+            try {
+              // API에 삭제 요청 (선택적)
+              try {
+                await axios.delete(\`/api/projects/\${id}\`);
+              } catch (apiError) {
+                console.warn('API 삭제 실패, localStorage만 사용:', apiError);
+              }
+              
+              // localStorage에서 삭제
+              projects = projects.filter(p => p.id !== id);
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+              alert('삭제되었습니다');
+              renderAdminPanel();
+            } catch (error) {
+              console.error('삭제 오류:', error);
+              alert('삭제 중 오류가 발생했습니다');
+            }
           }
 
           async function loadProjects() {
@@ -650,16 +686,38 @@ app.get('/', (c) => {
             const empty = document.getElementById('emptyState');
 
             try {
+              // 1. localStorage에서 먼저 로드 (즉시 표시)
               const storedProjects = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+              
+              // 2. API에서 최신 데이터 가져오기 시도
+              let apiProjects = [];
+              try {
+                const response = await axios.get('/api/projects');
+                if (response.data && response.data.success && response.data.data) {
+                  apiProjects = response.data.data;
+                  
+                  // API 데이터가 있으면 localStorage와 병합
+                  if (apiProjects.length > 0) {
+                    // API 데이터를 localStorage에 저장 (동기화)
+                    safeSetItem(STORAGE_KEY, JSON.stringify(apiProjects));
+                    projects = apiProjects;
+                  }
+                }
+              } catch (apiError) {
+                console.warn('API 호출 실패, localStorage 사용:', apiError);
+              }
+              
+              // 3. 최종 데이터 결정 (API 우선, 없으면 localStorage)
+              const finalProjects = apiProjects.length > 0 ? apiProjects : storedProjects;
               
               loading.style.display = 'none';
               
-              if (storedProjects.length === 0) {
+              if (finalProjects.length === 0) {
                 empty.classList.remove('hidden');
                 return;
               }
 
-              container.innerHTML = storedProjects.map(project => {
+              container.innerHTML = finalProjects.map(project => {
                 const youtubeId = getYouTubeVideoId(project.youtube_link);
                 
                 return \`
