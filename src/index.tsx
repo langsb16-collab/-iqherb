@@ -830,35 +830,81 @@ app.get('/', (c) => {
                       <i class="fas fa-newspaper mr-2"></i>참고뉴스
                     </button>
                   </div>
-                  
-                  <!-- Projects Tab Content -->
-                  <div id="projectsTab">
-                    <div class="flex gap-2 flex-wrap mb-3">
-                      <button onclick="showForm()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-                        <i class="fas fa-plus mr-2"></i>새 프로젝트
-                      </button>
-                      <button onclick="exportData()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" title="데이터 내보내기">
-                        <i class="fas fa-download mr-2"></i>내보내기
-                      </button>
-                      <button onclick="document.getElementById('importFile').click()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700" title="데이터 가져오기">
-                        <i class="fas fa-upload mr-2"></i>가져오기
-                      </button>
-                      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-                      <button onclick="clearStorage()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700" title="확인 후 삭제">
-                        <i class="fas fa-trash mr-2"></i>전체 삭제
-                      </button>
-                    </div>
-                    <div class="flex items-center gap-4 text-sm">
-                      <span class="font-medium">저장 공간:</span>
-                      <span class="\${storageColor} font-bold">
-                        <i class="fas fa-database mr-1"></i>\${storageInfo.sizeInMB}MB / 5MB (\${storageInfo.percentage}%)
-                      </span>
-                      <span class="text-gray-600">프로젝트: \${storageInfo.projects}개</span>
-                      \${storageInfo.percentage > 70 ? '<span class="text-red-600"><i class="fas fa-exclamation-triangle mr-1"></i>저장 공간 부족</span>' : ''}
-                    </div>
-                  </div>
                 </div>
               </header>
+              
+              <!-- Projects Tab Content -->
+              <div id="projectsTab" class="max-w-7xl mx-auto px-4 py-4">
+                <div class="flex gap-2 flex-wrap mb-3">
+                  <button onclick="showForm()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                    <i class="fas fa-plus mr-2"></i>새 프로젝트
+                  </button>
+                  <button onclick="exportData()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" title="데이터 내보내기">
+                    <i class="fas fa-download mr-2"></i>내보내기
+                  </button>
+                  <button onclick="document.getElementById('importFile').click()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700" title="데이터 가져오기">
+                    <i class="fas fa-upload mr-2"></i>가져오기
+                  </button>
+                  <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+                  <button onclick="clearStorage()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700" title="확인 후 삭제">
+                    <i class="fas fa-trash mr-2"></i>전체 삭제
+                  </button>
+                </div>
+                <div class="flex items-center gap-4 text-sm mb-4">
+                  <span class="font-medium">저장 공간:</span>
+                  <span class="\${storageColor} font-bold">
+                    <i class="fas fa-database mr-1"></i>\${storageInfo.sizeInMB}MB / 5MB (\${storageInfo.percentage}%)
+                  </span>
+                  <span class="text-gray-600">프로젝트: \${storageInfo.projects}개</span>
+                  \${storageInfo.percentage > 70 ? '<span class="text-red-600"><i class="fas fa-exclamation-triangle mr-1"></i>저장 공간 부족</span>' : ''}
+                </div>
+                <div class="bg-white rounded-xl shadow">
+                  <div class="p-6 border-b"><h3 class="text-xl font-bold">등록된 프로젝트 (\${projects.length}개)</h3></div>
+                  <div id="list">\${projects.length ? projects.map(p => \`
+                    <div class="p-6 border-b hover:bg-gray-50">
+                      <div class="flex justify-between">
+                        <div class="flex-1">
+                          <h4 class="text-lg font-bold mb-2">\${p.title}</h4>
+                          <p class="text-gray-600 text-sm mb-3">\${p.description || ''}</p>
+                          <div class="flex gap-2 text-sm">
+                            <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full">\${p.funding_type}</span>
+                            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full font-bold">\${(p.amount||0).toLocaleString()}만원</span>
+                          </div>
+                        </div>
+                        <div class="flex gap-2 ml-4">
+                          <button onclick="edit(\${p.id})" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"><i class="fas fa-edit"></i></button>
+                          <button onclick="del(\${p.id})" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"><i class="fas fa-trash"></i></button>
+                        </div>
+                      </div>
+                    </div>
+                  \`).join('') : '<div class="p-12 text-center text-gray-500"><i class="fas fa-inbox text-6xl mb-4"></i><p>등록된 프로젝트가 없습니다</p></div>'}</div>
+                </div>
+              </div>
+              
+              <!-- Announcements Tab Content -->
+              <div id="announcementsTab" style="display:none;" class="max-w-7xl mx-auto px-4 py-4">
+                <div class="flex gap-2 flex-wrap mb-3">
+                  <button onclick="showAnnouncementForm()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                    <i class="fas fa-plus mr-2"></i>새 공지
+                  </button>
+                </div>
+                <div id="announcementsContent">
+                  <!-- Announcements will be loaded here -->
+                </div>
+              </div>
+              
+              <!-- News Tab Content -->
+              <div id="newsTab" style="display:none;" class="max-w-7xl mx-auto px-4 py-4">
+                <div class="flex gap-2 flex-wrap mb-3">
+                  <button onclick="showNewsForm()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                    <i class="fas fa-plus mr-2"></i>새 참고뉴스
+                  </button>
+                </div>
+                <div id="newsContent">
+                  <!-- News will be loaded here -->
+                </div>
+              </div>
+              
               <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50" onclick="if(event.target===this) closeForm()">
                 <div class="min-h-screen px-4 py-8 flex items-center justify-center">
                   <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -905,57 +951,6 @@ app.get('/', (c) => {
                   </div>
                 </div>
               </div>
-              <main class="max-w-7xl mx-auto px-4 py-8" id="projectsContent">
-                <div class="bg-white rounded-xl shadow">
-                  <div class="p-6 border-b"><h3 class="text-xl font-bold">등록된 프로젝트 (\${projects.length}개)</h3></div>
-                  <div id="list">\${projects.length ? projects.map(p => \`
-                    <div class="p-6 border-b hover:bg-gray-50">
-                      <div class="flex justify-between">
-                        <div class="flex-1">
-                          <h4 class="text-lg font-bold mb-2">\${p.title}</h4>
-                          <p class="text-gray-600 text-sm mb-3">\${p.description || ''}</p>
-                          <div class="flex gap-2 text-sm">
-                            <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full">\${p.funding_type}</span>
-                            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full font-bold">\${(p.amount||0).toLocaleString()}만원</span>
-                          </div>
-                        </div>
-                        <div class="flex gap-2 ml-4">
-                          <button onclick="edit(\${p.id})" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"><i class="fas fa-edit"></i></button>
-                          <button onclick="del(\${p.id})" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"><i class="fas fa-trash"></i></button>
-                        </div>
-                      </div>
-                    </div>
-                  \`).join('') : '<div class="p-12 text-center text-gray-500"><i class="fas fa-inbox text-6xl mb-4"></i><p>등록된 프로젝트가 없습니다</p></div>'}</div>
-                </div>
-              </main>
-            
-            <!-- Announcements Tab Content -->
-            <div id="announcementsTab" style="display:none;">
-              <div class="max-w-7xl mx-auto px-4 py-4">
-                <div class="flex gap-2 flex-wrap mb-3">
-                  <button onclick="showAnnouncementForm()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-                    <i class="fas fa-plus mr-2"></i>새 공지
-                  </button>
-                </div>
-                <div id="announcementsContent">
-                  <!-- Announcements will be loaded here -->
-                </div>
-              </div>
-            </div>
-            
-            <!-- News Tab Content -->
-            <div id="newsTab" style="display:none;">
-              <div class="max-w-7xl mx-auto px-4 py-4">
-                <div class="flex gap-2 flex-wrap mb-3">
-                  <button onclick="showNewsForm()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-                    <i class="fas fa-plus mr-2"></i>새 참고뉴스
-                  </button>
-                </div>
-                <div id="newsContent">
-                  <!-- News will be loaded here -->
-                </div>
-              </div>
-            </div>
             \`;
           }
 
