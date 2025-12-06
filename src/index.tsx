@@ -1180,17 +1180,35 @@ app.get('/', (c) => {
             
             modal.innerHTML = \`
               <div class="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                <div class="p-6 border-b flex justify-between items-center">
-                  <h2 class="text-2xl font-bold">\${project.title}</h2>
-                  <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">
+                <div class="p-6 border-b flex justify-between items-center sticky top-0 bg-white z-10">
+                  <div class="flex-1">
+                    <h2 class="text-2xl font-bold text-gray-900">\${project.title}</h2>
+                    <p class="text-sm text-gray-500 mt-1">\${project.description || ''}</p>
+                  </div>
+                  <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700 ml-4">
                     <i class="fas fa-times text-2xl"></i>
                   </button>
                 </div>
-                <div class="p-6">
+                <div class="p-6 space-y-6">
+                  <!-- Project Info Tags -->
+                  <div class="flex flex-wrap gap-2">
+                    <span class="badge badge-\${project.funding_type === '투자' ? 'investment' : project.funding_type === '수익분배' ? 'revenue' : 'loan'}" style="display: flex; align-items: center; justify-content: center;">
+                      <i class="fas fa-tag mr-1"></i>\${project.funding_type}
+                    </span>
+                    <span class="amount-tag" style="display: flex; align-items: center; justify-content: center;">
+                      <i class="fas fa-won-sign mr-1"></i>\${(project.amount || 0).toLocaleString()}만원
+                    </span>
+                    \${project.category ? \`<span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"><i class="fas fa-folder mr-1"></i>\${project.category}</span>\` : ''}
+                  </div>
+                  
+                  <!-- YouTube Video Section -->
                   \${youtubeId ? \`
-                    <div class="mb-6">
-                      <h3 class="text-lg font-bold mb-2"><i class="fab fa-youtube text-red-600 mr-2"></i>클릭하시면 설명 영상 보입니다</h3>
-                      <div class="mb-4 max-w-[59%] mx-auto">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <h3 class="text-lg font-bold mb-3 flex items-center">
+                        <i class="fab fa-youtube text-red-600 mr-2"></i>
+                        <span data-i18n="clickForVideo">클릭하시면 설명 영상 보입니다</span>
+                      </h3>
+                      <div class="max-w-3xl mx-auto">
                         <img src="https://img.youtube.com/vi/\${youtubeId}/hqdefault.jpg" 
                           alt="YouTube 썸네일" 
                           class="w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity shadow-lg"
@@ -1206,24 +1224,75 @@ app.get('/', (c) => {
                     </div>
                   \` : ''}
                   
-                  <div class="mb-4">
-                    <h3 class="text-lg font-bold mb-2">프로젝트 내용</h3>
-                    <p class="text-gray-600 whitespace-pre-wrap">\${project.text_info || project.description || '프로젝트 내용이 없습니다.'}</p>
-                  </div>
+                  <!-- Text Info Section - Main Content -->
+                  \${project.text_info ? \`
+                    <div class="bg-white border-2 border-purple-200 rounded-lg p-6">
+                      <h3 class="text-xl font-bold mb-4 flex items-center text-purple-700">
+                        <i class="fas fa-file-alt mr-2"></i>
+                        <span data-i18n="projectContent">프로젝트 상세 정보</span>
+                      </h3>
+                      <div class="prose max-w-none">
+                        <div class="text-gray-700 whitespace-pre-wrap leading-relaxed text-base" style="line-height: 1.8;">
+                          \${project.text_info.split('\\n').map(line => 
+                            line.trim() ? \`<p class="mb-3">\${line}</p>\` : '<br>'
+                          ).join('')}
+                        </div>
+                      </div>
+                    </div>
+                  \` : ''}
                   
-                  <div class="flex flex-wrap gap-2">
-                    <span class="badge badge-\${project.funding_type === '투자' ? 'investment' : project.funding_type === '수익분배' ? 'revenue' : 'loan'}" style="display: flex; align-items: center; justify-content: center;">
-                      <i class="fas fa-tag mr-1"></i>\${project.funding_type}
-                    </span>
-                    <span class="amount-tag" style="display: flex; align-items: center; justify-content: center;">
-                      <i class="fas fa-won-sign mr-1"></i>\${(project.amount || 0).toLocaleString()}만원
-                    </span>
-                  </div>
+                  <!-- Additional Info -->
+                  \${project.languages || project.contact_email ? \`
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <h3 class="text-lg font-bold mb-3 flex items-center">
+                        <i class="fas fa-info-circle mr-2 text-blue-600"></i>추가 정보
+                      </h3>
+                      <div class="space-y-2 text-sm">
+                        \${project.languages ? \`
+                          <div class="flex items-start">
+                            <span class="font-medium text-gray-600 min-w-[100px]"><i class="fas fa-language mr-2"></i>지원 언어:</span>
+                            <span class="text-gray-800">\${project.languages}</span>
+                          </div>
+                        \` : ''}
+                        \${project.contact_email ? \`
+                          <div class="flex items-start">
+                            <span class="font-medium text-gray-600 min-w-[100px]"><i class="fas fa-envelope mr-2"></i>연락처:</span>
+                            <a href="mailto:\${project.contact_email}" class="text-blue-600 hover:underline">\${project.contact_email}</a>
+                          </div>
+                        \` : ''}
+                        \${project.contact_name ? \`
+                          <div class="flex items-start">
+                            <span class="font-medium text-gray-600 min-w-[100px]"><i class="fas fa-user mr-2"></i>담당자:</span>
+                            <span class="text-gray-800">\${project.contact_name}</span>
+                          </div>
+                        \` : ''}
+                      </div>
+                    </div>
+                  \` : ''}
+                  
+                  <!-- No Content Message -->
+                  \${!project.text_info && !youtubeId ? \`
+                    <div class="text-center py-12 text-gray-500">
+                      <i class="fas fa-inbox text-6xl mb-4 opacity-30"></i>
+                      <p data-i18n="noContent">프로젝트 상세 내용이 없습니다.</p>
+                    </div>
+                  \` : ''}
                 </div>
               </div>
             \`;
             
             document.body.appendChild(modal);
+            
+            // Apply i18n translations to modal
+            if (typeof changeLanguage !== 'undefined') {
+              const currentLang = localStorage.getItem('iqherb_language') || 'ko';
+              modal.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations && translations[currentLang] && translations[currentLang][key]) {
+                  element.innerHTML = translations[currentLang][key];
+                }
+              });
+            }
           }
           
           // ============================================
