@@ -249,6 +249,156 @@ app.delete('/api/projects/:id', async (c) => {
 })
 
 // ============================================
+// API Routes - Announcements CRUD
+// ============================================
+
+let memoryAnnouncements: any[] = []
+
+// Get all announcements
+app.get('/api/announcements', async (c) => {
+  try {
+    const activeAnnouncements = memoryAnnouncements.filter(a => a.status === 'active' || !a.status)
+    return c.json({ success: true, data: activeAnnouncements })
+  } catch (error) {
+    console.error('Announcements API error:', error)
+    return c.json({ success: true, data: [] })
+  }
+})
+
+// Create new announcement
+app.post('/api/announcements', async (c) => {
+  try {
+    const body = await c.req.json()
+    const newAnnouncement = {
+      id: Date.now(),
+      title: body.title,
+      content: body.content,
+      image_url: body.image_url || '',
+      status: 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+    memoryAnnouncements.push(newAnnouncement)
+    return c.json({ success: true, data: newAnnouncement })
+  } catch (error) {
+    console.error('Create announcement error:', error)
+    return c.json({ success: false, error: 'Failed to create announcement' }, 500)
+  }
+})
+
+// Update announcement
+app.put('/api/announcements/:id', async (c) => {
+  try {
+    const id = c.req.param('id')
+    const body = await c.req.json()
+    const idx = memoryAnnouncements.findIndex(a => a.id == id)
+    if (idx !== -1) {
+      memoryAnnouncements[idx] = {
+        ...memoryAnnouncements[idx],
+        ...body,
+        updated_at: new Date().toISOString()
+      }
+      return c.json({ success: true })
+    }
+    return c.json({ success: false, error: 'Announcement not found' }, 404)
+  } catch (error) {
+    console.error('Update announcement error:', error)
+    return c.json({ success: false, error: 'Failed to update announcement' }, 500)
+  }
+})
+
+// Delete announcement
+app.delete('/api/announcements/:id', async (c) => {
+  try {
+    const id = c.req.param('id')
+    const initialLength = memoryAnnouncements.length
+    memoryAnnouncements = memoryAnnouncements.filter(a => a.id != id)
+    if (memoryAnnouncements.length < initialLength) {
+      return c.json({ success: true })
+    }
+    return c.json({ success: false, error: 'Announcement not found' }, 404)
+  } catch (error) {
+    console.error('Delete announcement error:', error)
+    return c.json({ success: false, error: 'Failed to delete announcement' }, 500)
+  }
+})
+
+// ============================================
+// API Routes - News CRUD
+// ============================================
+
+let memoryNews: any[] = []
+
+// Get all news
+app.get('/api/news', async (c) => {
+  try {
+    const activeNews = memoryNews.filter(n => n.status === 'active' || !n.status)
+    return c.json({ success: true, data: activeNews })
+  } catch (error) {
+    console.error('News API error:', error)
+    return c.json({ success: true, data: [] })
+  }
+})
+
+// Create new news
+app.post('/api/news', async (c) => {
+  try {
+    const body = await c.req.json()
+    const newNews = {
+      id: Date.now(),
+      title: body.title,
+      youtube_link: body.youtube_link || '',
+      description: body.description || '',
+      status: 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+    memoryNews.push(newNews)
+    return c.json({ success: true, data: newNews })
+  } catch (error) {
+    console.error('Create news error:', error)
+    return c.json({ success: false, error: 'Failed to create news' }, 500)
+  }
+})
+
+// Update news
+app.put('/api/news/:id', async (c) => {
+  try {
+    const id = c.req.param('id')
+    const body = await c.req.json()
+    const idx = memoryNews.findIndex(n => n.id == id)
+    if (idx !== -1) {
+      memoryNews[idx] = {
+        ...memoryNews[idx],
+        ...body,
+        updated_at: new Date().toISOString()
+      }
+      return c.json({ success: true })
+    }
+    return c.json({ success: false, error: 'News not found' }, 404)
+  } catch (error) {
+    console.error('Update news error:', error)
+    return c.json({ success: false, error: 'Failed to update news' }, 500)
+  }
+})
+
+// Delete news
+app.delete('/api/news/:id', async (c) => {
+  try {
+    const id = c.req.param('id')
+    const initialLength = memoryNews.length
+    memoryNews = memoryNews.filter(n => n.id != id)
+    if (memoryNews.length < initialLength) {
+      return c.json({ success: true })
+    }
+    return c.json({ success: false, error: 'News not found' }, 404)
+  } catch (error) {
+    console.error('Delete news error:', error)
+    return c.json({ success: false, error: 'Failed to delete news' }, 500)
+  }
+})
+
+// ============================================
 // Frontend Routes
 // ============================================
 
@@ -312,6 +462,36 @@ app.get('/', (c) => {
                     <div class="bg-white/20 backdrop-blur-sm px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full whitespace-nowrap">
                         <i class="fas fa-coins mr-0.5 text-xs"></i>창업희망
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Announcements Section -->
+        <section class="bg-yellow-50 border-b border-yellow-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <h3 class="text-lg font-bold text-gray-900 mb-3 flex items-center">
+                    <i class="fas fa-bullhorn text-yellow-600 mr-2"></i>공지
+                </h3>
+                <div id="announcementsContainer" class="space-y-3">
+                    <!-- Announcements will be loaded here -->
+                </div>
+                <div id="announcementsEmpty" class="hidden text-center text-gray-500 text-sm py-4">
+                    등록된 공지가 없습니다
+                </div>
+            </div>
+        </section>
+
+        <!-- News Section -->
+        <section class="bg-blue-50 border-b border-blue-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <h3 class="text-lg font-bold text-gray-900 mb-3 flex items-center">
+                    <i class="fas fa-newspaper text-blue-600 mr-2"></i>참고뉴스
+                </h3>
+                <div id="newsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- News will be loaded here -->
+                </div>
+                <div id="newsEmpty" class="hidden text-center text-gray-500 text-sm py-4">
+                    등록된 참고뉴스가 없습니다
                 </div>
             </div>
         </section>
@@ -630,8 +810,28 @@ app.get('/', (c) => {
               <header class="bg-white shadow p-4">
                 <div class="max-w-7xl mx-auto">
                   <div class="flex justify-between items-center mb-3">
-                    <h1 class="text-2xl font-bold"><i class="fas fa-cog text-purple-600 mr-2"></i>프로젝트 관리</h1>
-                    <div class="flex gap-2 flex-wrap">
+                    <h1 class="text-2xl font-bold"><i class="fas fa-cog text-purple-600 mr-2"></i>관리자 페이지</h1>
+                    <a href="/" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+                      <i class="fas fa-home mr-2"></i>메인
+                    </a>
+                  </div>
+                  
+                  <!-- Tabs -->
+                  <div class="flex gap-2 border-b mb-4">
+                    <button id="tabProjects" onclick="switchTab('projects')" class="px-4 py-2 font-medium border-b-2 border-purple-600 text-purple-600">
+                      <i class="fas fa-folder mr-2"></i>프로젝트
+                    </button>
+                    <button id="tabAnnouncements" onclick="switchTab('announcements')" class="px-4 py-2 font-medium text-gray-600 hover:text-purple-600">
+                      <i class="fas fa-bullhorn mr-2"></i>공지
+                    </button>
+                    <button id="tabNews" onclick="switchTab('news')" class="px-4 py-2 font-medium text-gray-600 hover:text-purple-600">
+                      <i class="fas fa-newspaper mr-2"></i>참고뉴스
+                    </button>
+                  </div>
+                  
+                  <!-- Projects Tab Content -->
+                  <div id="projectsTab">
+                    <div class="flex gap-2 flex-wrap mb-3">
                       <button onclick="showForm()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
                         <i class="fas fa-plus mr-2"></i>새 프로젝트
                       </button>
@@ -645,11 +845,7 @@ app.get('/', (c) => {
                       <button onclick="clearStorage()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700" title="확인 후 삭제">
                         <i class="fas fa-trash mr-2"></i>전체 삭제
                       </button>
-                      <a href="/" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
-                        <i class="fas fa-home mr-2"></i>메인
-                      </a>
                     </div>
-                  </div>
                   <div class="flex items-center gap-4 text-sm">
                     <span class="font-medium">저장 공간:</span>
                     <span class="\${storageColor} font-bold">
@@ -706,7 +902,7 @@ app.get('/', (c) => {
                   </div>
                 </div>
               </div>
-              <main class="max-w-7xl mx-auto px-4 py-8">
+              <main class="max-w-7xl mx-auto px-4 py-8" id="projectsContent">
                 <div class="bg-white rounded-xl shadow">
                   <div class="p-6 border-b"><h3 class="text-xl font-bold">등록된 프로젝트 (\${projects.length}개)</h3></div>
                   <div id="list">\${projects.length ? projects.map(p => \`
@@ -729,11 +925,41 @@ app.get('/', (c) => {
                   \`).join('') : '<div class="p-12 text-center text-gray-500"><i class="fas fa-inbox text-6xl mb-4"></i><p>등록된 프로젝트가 없습니다</p></div>'}</div>
                 </div>
               </main>
+              </div>
+              
+              <!-- Announcements Tab Content -->
+              <div id="announcementsTab" style="display:none;">
+                <div class="flex gap-2 flex-wrap mb-3">
+                  <button onclick="showAnnouncementForm()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                    <i class="fas fa-plus mr-2"></i>새 공지
+                  </button>
+                </div>
+                <main class="max-w-7xl mx-auto px-4 py-8" id="announcementsContent">
+                  <!-- Announcements will be loaded here -->
+                </main>
+              </div>
+              
+              <!-- News Tab Content -->
+              <div id="newsTab" style="display:none;">
+                <div class="flex gap-2 flex-wrap mb-3">
+                  <button onclick="showNewsForm()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                    <i class="fas fa-plus mr-2"></i>새 참고뉴스
+                  </button>
+                </div>
+                <main class="max-w-7xl mx-auto px-4 py-8" id="newsContent">
+                  <!-- News will be loaded here -->
+                </main>
+              </div>
+              
+              </div>
+            </header>
             \`;
           }
 
           function renderMainPage() {
             loadProjects();
+            loadAnnouncementsMain();
+            loadNewsMain();
           }
 
           function showForm() {
@@ -982,6 +1208,465 @@ app.get('/', (c) => {
             \`;
             
             document.body.appendChild(modal);
+          }
+          
+          // ============================================
+          // Tab Switching
+          // ============================================
+          function switchTab(tab) {
+            // Hide all tabs
+            document.getElementById('projectsTab').style.display = 'none';
+            document.getElementById('announcementsTab').style.display = 'none';
+            document.getElementById('newsTab').style.display = 'none';
+            
+            // Remove active state from all tab buttons
+            document.getElementById('tabProjects').className = 'px-4 py-2 font-medium text-gray-600 hover:text-purple-600';
+            document.getElementById('tabAnnouncements').className = 'px-4 py-2 font-medium text-gray-600 hover:text-purple-600';
+            document.getElementById('tabNews').className = 'px-4 py-2 font-medium text-gray-600 hover:text-purple-600';
+            
+            // Show selected tab
+            if (tab === 'projects') {
+              document.getElementById('projectsTab').style.display = 'block';
+              document.getElementById('tabProjects').className = 'px-4 py-2 font-medium border-b-2 border-purple-600 text-purple-600';
+            } else if (tab === 'announcements') {
+              document.getElementById('announcementsTab').style.display = 'block';
+              document.getElementById('tabAnnouncements').className = 'px-4 py-2 font-medium border-b-2 border-purple-600 text-purple-600';
+              loadAnnouncements();
+            } else if (tab === 'news') {
+              document.getElementById('newsTab').style.display = 'block';
+              document.getElementById('tabNews').className = 'px-4 py-2 font-medium border-b-2 border-purple-600 text-purple-600';
+              loadNews();
+            }
+          }
+          
+          // ============================================
+          // Announcements Functions
+          // ============================================
+          let editingAnnouncement = null;
+          
+          async function loadAnnouncements() {
+            try {
+              const response = await axios.get('/api/announcements');
+              const announcements = response.data.data || [];
+              
+              const content = document.getElementById('announcementsContent');
+              if (announcements.length === 0) {
+                content.innerHTML = '<div class="bg-white rounded-xl shadow p-12 text-center text-gray-500"><i class="fas fa-inbox text-6xl mb-4"></i><p>등록된 공지가 없습니다</p></div>';
+                return;
+              }
+              
+              content.innerHTML = \`
+                <div class="bg-white rounded-xl shadow">
+                  <div class="p-6 border-b"><h3 class="text-xl font-bold">등록된 공지 (\${announcements.length}개)</h3></div>
+                  <div>\${announcements.map(a => \`
+                    <div class="p-6 border-b hover:bg-gray-50">
+                      <div class="flex justify-between">
+                        <div class="flex-1">
+                          <h4 class="text-lg font-bold mb-2">\${a.title}</h4>
+                          <p class="text-gray-600 text-sm mb-3 whitespace-pre-wrap">\${a.content || ''}</p>
+                          \${a.image_url ? \`<img src="\${a.image_url}" alt="\${a.title}" class="max-w-md rounded mt-3" />\` : ''}
+                        </div>
+                        <div class="flex gap-2 ml-4">
+                          <button onclick="editAnnouncement(\${a.id})" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"><i class="fas fa-edit"></i></button>
+                          <button onclick="deleteAnnouncement(\${a.id})" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"><i class="fas fa-trash"></i></button>
+                        </div>
+                      </div>
+                    </div>
+                  \`).join('')}</div>
+                </div>
+              \`;
+            } catch (error) {
+              console.error('공지 로드 실패:', error);
+            }
+          }
+          
+          function showAnnouncementForm() {
+            editingAnnouncement = null;
+            const html = \`
+              <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target===this) closeAnnouncementForm()">
+                <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                  <div class="p-6 border-b flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">새 공지</h2>
+                    <button onclick="closeAnnouncementForm()" class="text-gray-500 hover:text-gray-700">
+                      <i class="fas fa-times text-2xl"></i>
+                    </button>
+                  </div>
+                  <form onsubmit="saveAnnouncement(event)" class="p-6 space-y-4">
+                    <div>
+                      <label class="block text-sm font-medium mb-2">제목 *</label>
+                      <input name="title" required class="w-full border rounded px-4 py-2" />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium mb-2">내용 *</label>
+                      <textarea name="content" required rows="6" class="w-full border rounded px-4 py-2"></textarea>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium mb-2">이미지 URL</label>
+                      <input type="url" name="image_url" class="w-full border rounded px-4 py-2" placeholder="https://example.com/image.jpg" />
+                    </div>
+                    <div class="flex gap-3 justify-end pt-4 border-t">
+                      <button type="button" onclick="closeAnnouncementForm()" class="px-6 py-2 border rounded">취소</button>
+                      <button type="submit" class="px-6 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
+                        <i class="fas fa-save mr-2"></i>저장
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            \`;
+            document.body.insertAdjacentHTML('beforeend', html);
+          }
+          
+          async function editAnnouncement(id) {
+            try {
+              const response = await axios.get('/api/announcements');
+              editingAnnouncement = response.data.data.find(a => a.id === id);
+              
+              const html = \`
+                <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target===this) closeAnnouncementForm()">
+                  <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                    <div class="p-6 border-b flex justify-between items-center">
+                      <h2 class="text-2xl font-bold">공지 수정</h2>
+                      <button onclick="closeAnnouncementForm()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-2xl"></i>
+                      </button>
+                    </div>
+                    <form onsubmit="saveAnnouncement(event)" class="p-6 space-y-4">
+                      <div>
+                        <label class="block text-sm font-medium mb-2">제목 *</label>
+                        <input name="title" required value="\${editingAnnouncement.title}" class="w-full border rounded px-4 py-2" />
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium mb-2">내용 *</label>
+                        <textarea name="content" required rows="6" class="w-full border rounded px-4 py-2">\${editingAnnouncement.content || ''}</textarea>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium mb-2">이미지 URL</label>
+                        <input type="url" name="image_url" value="\${editingAnnouncement.image_url || ''}" class="w-full border rounded px-4 py-2" placeholder="https://example.com/image.jpg" />
+                      </div>
+                      <div class="flex gap-3 justify-end pt-4 border-t">
+                        <button type="button" onclick="closeAnnouncementForm()" class="px-6 py-2 border rounded">취소</button>
+                        <button type="submit" class="px-6 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
+                          <i class="fas fa-save mr-2"></i>저장
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              \`;
+              document.body.insertAdjacentHTML('beforeend', html);
+            } catch (error) {
+              alert('공지 로드 실패');
+            }
+          }
+          
+          async function saveAnnouncement(event) {
+            event.preventDefault();
+            const form = event.target;
+            const data = {
+              title: form.title.value,
+              content: form.content.value,
+              image_url: form.image_url.value
+            };
+            
+            try {
+              if (editingAnnouncement) {
+                await axios.put(\`/api/announcements/\${editingAnnouncement.id}\`, data);
+                alert('공지가 수정되었습니다');
+              } else {
+                await axios.post('/api/announcements', data);
+                alert('공지가 등록되었습니다');
+              }
+              closeAnnouncementForm();
+              loadAnnouncements();
+              loadAnnouncementsMain();
+            } catch (error) {
+              alert('저장 실패: ' + error.message);
+            }
+          }
+          
+          async function deleteAnnouncement(id) {
+            if (!confirm('이 공지를 삭제하시겠습니까?')) return;
+            
+            try {
+              await axios.delete(\`/api/announcements/\${id}\`);
+              alert('공지가 삭제되었습니다');
+              loadAnnouncements();
+              loadAnnouncementsMain();
+            } catch (error) {
+              alert('삭제 실패: ' + error.message);
+            }
+          }
+          
+          function closeAnnouncementForm() {
+            const modal = document.querySelector('.fixed.inset-0');
+            if (modal) modal.remove();
+            editingAnnouncement = null;
+          }
+          
+          // ============================================
+          // News Functions
+          // ============================================
+          let editingNews = null;
+          
+          async function loadNews() {
+            try {
+              const response = await axios.get('/api/news');
+              const newsList = response.data.data || [];
+              
+              const content = document.getElementById('newsContent');
+              if (newsList.length === 0) {
+                content.innerHTML = '<div class="bg-white rounded-xl shadow p-12 text-center text-gray-500"><i class="fas fa-inbox text-6xl mb-4"></i><p>등록된 참고뉴스가 없습니다</p></div>';
+                return;
+              }
+              
+              content.innerHTML = \`
+                <div class="bg-white rounded-xl shadow">
+                  <div class="p-6 border-b"><h3 class="text-xl font-bold">등록된 참고뉴스 (\${newsList.length}개)</h3></div>
+                  <div>\${newsList.map(n => {
+                    const youtubeId = getYouTubeVideoId(n.youtube_link);
+                    return \`
+                    <div class="p-6 border-b hover:bg-gray-50">
+                      <div class="flex justify-between">
+                        <div class="flex-1">
+                          <h4 class="text-lg font-bold mb-2">\${n.title}</h4>
+                          <p class="text-gray-600 text-sm mb-3">\${n.description || ''}</p>
+                          \${youtubeId ? \`
+                            <div class="mt-3">
+                              <img src="https://img.youtube.com/vi/\${youtubeId}/hqdefault.jpg" 
+                                   alt="YouTube 썸네일" 
+                                   class="w-48 rounded cursor-pointer hover:opacity-80"
+                                   onclick="window.open('https://www.youtube.com/watch?v=\${youtubeId}', '_blank')" />
+                            </div>
+                          \` : ''}
+                        </div>
+                        <div class="flex gap-2 ml-4">
+                          <button onclick="editNews(\${n.id})" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"><i class="fas fa-edit"></i></button>
+                          <button onclick="deleteNews(\${n.id})" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"><i class="fas fa-trash"></i></button>
+                        </div>
+                      </div>
+                    </div>
+                    \`;
+                  }).join('')}</div>
+                </div>
+              \`;
+            } catch (error) {
+              console.error('참고뉴스 로드 실패:', error);
+            }
+          }
+          
+          function showNewsForm() {
+            editingNews = null;
+            const html = \`
+              <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target===this) closeNewsForm()">
+                <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                  <div class="p-6 border-b flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">새 참고뉴스</h2>
+                    <button onclick="closeNewsForm()" class="text-gray-500 hover:text-gray-700">
+                      <i class="fas fa-times text-2xl"></i>
+                    </button>
+                  </div>
+                  <form onsubmit="saveNews(event)" class="p-6 space-y-4">
+                    <div>
+                      <label class="block text-sm font-medium mb-2">제목 *</label>
+                      <input name="title" required class="w-full border rounded px-4 py-2" />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium mb-2">YouTube 링크 *</label>
+                      <input type="url" name="youtube_link" required class="w-full border rounded px-4 py-2" placeholder="https://youtube.com/watch?v=..." />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium mb-2">설명</label>
+                      <textarea name="description" rows="3" class="w-full border rounded px-4 py-2"></textarea>
+                    </div>
+                    <div class="flex gap-3 justify-end pt-4 border-t">
+                      <button type="button" onclick="closeNewsForm()" class="px-6 py-2 border rounded">취소</button>
+                      <button type="submit" class="px-6 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
+                        <i class="fas fa-save mr-2"></i>저장
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            \`;
+            document.body.insertAdjacentHTML('beforeend', html);
+          }
+          
+          async function editNews(id) {
+            try {
+              const response = await axios.get('/api/news');
+              editingNews = response.data.data.find(n => n.id === id);
+              
+              const html = \`
+                <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target===this) closeNewsForm()">
+                  <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                    <div class="p-6 border-b flex justify-between items-center">
+                      <h2 class="text-2xl font-bold">참고뉴스 수정</h2>
+                      <button onclick="closeNewsForm()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-2xl"></i>
+                      </button>
+                    </div>
+                    <form onsubmit="saveNews(event)" class="p-6 space-y-4">
+                      <div>
+                        <label class="block text-sm font-medium mb-2">제목 *</label>
+                        <input name="title" required value="\${editingNews.title}" class="w-full border rounded px-4 py-2" />
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium mb-2">YouTube 링크 *</label>
+                        <input type="url" name="youtube_link" required value="\${editingNews.youtube_link || ''}" class="w-full border rounded px-4 py-2" placeholder="https://youtube.com/watch?v=..." />
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium mb-2">설명</label>
+                        <textarea name="description" rows="3" class="w-full border rounded px-4 py-2">\${editingNews.description || ''}</textarea>
+                      </div>
+                      <div class="flex gap-3 justify-end pt-4 border-t">
+                        <button type="button" onclick="closeNewsForm()" class="px-6 py-2 border rounded">취소</button>
+                        <button type="submit" class="px-6 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
+                          <i class="fas fa-save mr-2"></i>저장
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              \`;
+              document.body.insertAdjacentHTML('beforeend', html);
+            } catch (error) {
+              alert('참고뉴스 로드 실패');
+            }
+          }
+          
+          async function saveNews(event) {
+            event.preventDefault();
+            const form = event.target;
+            const data = {
+              title: form.title.value,
+              youtube_link: form.youtube_link.value,
+              description: form.description.value
+            };
+            
+            try {
+              if (editingNews) {
+                await axios.put(\`/api/news/\${editingNews.id}\`, data);
+                alert('참고뉴스가 수정되었습니다');
+              } else {
+                await axios.post('/api/news', data);
+                alert('참고뉴스가 등록되었습니다');
+              }
+              closeNewsForm();
+              loadNews();
+              loadNewsMain();
+            } catch (error) {
+              alert('저장 실패: ' + error.message);
+            }
+          }
+          
+          async function deleteNews(id) {
+            if (!confirm('이 참고뉴스를 삭제하시겠습니까?')) return;
+            
+            try {
+              await axios.delete(\`/api/news/\${id}\`);
+              alert('참고뉴스가 삭제되었습니다');
+              loadNews();
+              loadNewsMain();
+            } catch (error) {
+              alert('삭제 실패: ' + error.message);
+            }
+          }
+          
+          function closeNewsForm() {
+            const modal = document.querySelector('.fixed.inset-0');
+            if (modal) modal.remove();
+            editingNews = null;
+          }
+          
+          // ============================================
+          // Main Page Loading Functions
+          // ============================================
+          async function loadAnnouncementsMain() {
+            try {
+              const response = await axios.get('/api/announcements');
+              const announcements = response.data.data || [];
+              
+              const container = document.getElementById('announcementsContainer');
+              const empty = document.getElementById('announcementsEmpty');
+              
+              if (announcements.length === 0) {
+                container.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+              }
+              
+              empty.classList.add('hidden');
+              container.innerHTML = announcements.map(a => \`
+                <div class="bg-white rounded-lg shadow p-4">
+                  <h4 class="font-bold text-base mb-2">\${a.title}</h4>
+                  <p class="text-sm text-gray-600 whitespace-pre-wrap">\${a.content}</p>
+                  \${a.image_url ? \`<img src="\${a.image_url}" alt="\${a.title}" class="mt-3 rounded max-w-full" />\` : ''}
+                </div>
+              \`).join('');
+            } catch (error) {
+              console.error('공지 로드 실패:', error);
+            }
+          }
+          
+          async function loadNewsMain() {
+            try {
+              const response = await axios.get('/api/news');
+              const newsList = response.data.data || [];
+              
+              const container = document.getElementById('newsContainer');
+              const empty = document.getElementById('newsEmpty');
+              
+              if (newsList.length === 0) {
+                container.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+              }
+              
+              empty.classList.add('hidden');
+              container.innerHTML = newsList.map(n => {
+                const youtubeId = getYouTubeVideoId(n.youtube_link);
+                return \`
+                  <div class="bg-white rounded-lg shadow overflow-hidden">
+                    \${youtubeId ? \`
+                      <div class="relative" style="padding-top: 56.25%;">
+                        <img 
+                          src="https://img.youtube.com/vi/\${youtubeId}/hqdefault.jpg"
+                          alt="YouTube 썸네일"
+                          loading="lazy"
+                          class="absolute top-0 left-0 w-full h-full object-cover cursor-pointer"
+                          onclick="playYouTubeNews('\${youtubeId}', this.parentElement)"
+                          onerror="this.src='https://img.youtube.com/vi/\${youtubeId}/default.jpg'; this.onerror=null;"
+                        />
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <div class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center">
+                            <i class="fas fa-play text-white text-2xl ml-1"></i>
+                          </div>
+                        </div>
+                      </div>
+                    \` : ''}
+                    <div class="p-4">
+                      <h4 class="font-bold text-sm mb-1">\${n.title}</h4>
+                      <p class="text-xs text-gray-600">\${n.description || ''}</p>
+                    </div>
+                  </div>
+                \`;
+              }).join('');
+            } catch (error) {
+              console.error('참고뉴스 로드 실패:', error);
+            }
+          }
+          
+          function playYouTubeNews(videoId, container) {
+            container.innerHTML = \`
+              <iframe
+                src="https://www.youtube.com/embed/\${videoId}?autoplay=1"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+                class="absolute top-0 left-0 w-full h-full"
+              ></iframe>
+            \`;
           }
           
           window.addEventListener('hashchange', loadPage);
