@@ -686,12 +686,12 @@ app.get('/', (c) => {
 
               container.innerHTML = storedProjects.map(project => {
                 const youtubeId = getYouTubeVideoId(project.youtube_link);
-                const thumbnail = youtubeId ? \`https://img.youtube.com/vi/\${youtubeId}/maxresdefault.jpg\` : 'https://via.placeholder.com/400x300?text=No+Image';
+                const thumbnail = youtubeId ? \`https://img.youtube.com/vi/\${youtubeId}/hqdefault.jpg\` : 'https://via.placeholder.com/400x300?text=No+Image';
                 
                 return \`
                 <div class="bg-white rounded-lg shadow card-hover overflow-hidden cursor-pointer" onclick="showProjectDetail(\${project.id})">
-                  <div class="w-full h-32 bg-gray-100 flex items-center justify-center overflow-hidden">
-                    <img src="\${thumbnail}" class="w-full h-full object-contain">
+                  <div class="w-full h-32 bg-gray-200 flex items-center justify-center overflow-hidden">
+                    <img src="\${thumbnail}" alt="\${project.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/400x300?text=No+Thumbnail'">
                   </div>
                   <div class="p-3">
                     <h3 class="text-sm font-bold text-gray-900 mb-2 line-clamp-1">\${project.title}</h3>
