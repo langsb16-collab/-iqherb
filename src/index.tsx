@@ -1442,37 +1442,60 @@ app.get('/', (c) => {
             const form = event.target;
             
             try {
-              const announcements = JSON.parse(localStorage.getItem(ANNOUNCEMENTS_KEY) || '[]');
+              const announcementData = {
+                title: form.title.value,
+                content: form.content.value,
+                image_url: form.image_url.value || ''
+              };
               
               if (editingAnnouncement) {
-                // 수정
-                const index = announcements.findIndex(a => a.id === editingAnnouncement.id);
-                if (index !== -1) {
-                  announcements[index] = {
-                    ...announcements[index],
-                    title: form.title.value,
-                    content: form.content.value,
-                    image_url: form.image_url.value,
+                // 수정 - API 호출
+                try {
+                  await fetch(\`/api/announcements/\${editingAnnouncement.id}\`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(announcementData)
+                  });
+                  alert('공지가 수정되었습니다');
+                } catch (apiError) {
+                  // API 실패시 localStorage에 저장
+                  const announcements = JSON.parse(localStorage.getItem(ANNOUNCEMENTS_KEY) || '[]');
+                  const index = announcements.findIndex(a => a.id === editingAnnouncement.id);
+                  if (index !== -1) {
+                    announcements[index] = {
+                      ...announcements[index],
+                      ...announcementData,
+                      updated_at: new Date().toISOString()
+                    };
+                    localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(announcements));
+                  }
+                  alert('공지가 수정되었습니다 (로컬 저장)');
+                }
+              } else {
+                // 새로 등록 - API 호출
+                try {
+                  await fetch('/api/announcements', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(announcementData)
+                  });
+                  alert('공지가 등록되었습니다');
+                } catch (apiError) {
+                  // API 실패시 localStorage에 저장
+                  const announcements = JSON.parse(localStorage.getItem(ANNOUNCEMENTS_KEY) || '[]');
+                  const newAnnouncement = {
+                    id: Date.now(),
+                    ...announcementData,
+                    status: 'active',
+                    created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                   };
+                  announcements.push(newAnnouncement);
+                  localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(announcements));
+                  alert('공지가 등록되었습니다 (로컬 저장)');
                 }
-                alert('공지가 수정되었습니다');
-              } else {
-                // 새로 등록
-                const newAnnouncement = {
-                  id: Date.now(),
-                  title: form.title.value,
-                  content: form.content.value,
-                  image_url: form.image_url.value,
-                  status: 'active',
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                };
-                announcements.push(newAnnouncement);
-                alert('공지가 등록되었습니다');
               }
               
-              localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(announcements));
               closeAnnouncementForm();
               loadAnnouncements();
               loadAnnouncementsMain();
@@ -1485,6 +1508,14 @@ app.get('/', (c) => {
             if (!confirm('이 공지를 삭제하시겠습니까?')) return;
             
             try {
+              // API로 삭제 시도
+              try {
+                await fetch(\`/api/announcements/\${id}\`, { method: 'DELETE' });
+              } catch (apiError) {
+                // API 실패시 로컬에서만 삭제
+              }
+              
+              // localStorage에서도 삭제
               let announcements = JSON.parse(localStorage.getItem(ANNOUNCEMENTS_KEY) || '[]');
               announcements = announcements.filter(a => a.id !== id);
               localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(announcements));
@@ -1637,37 +1668,60 @@ app.get('/', (c) => {
             const form = event.target;
             
             try {
-              const newsList = JSON.parse(localStorage.getItem(NEWS_KEY) || '[]');
+              const newsData = {
+                title: form.title.value,
+                youtube_link: form.youtube_link.value,
+                description: form.description.value || ''
+              };
               
               if (editingNews) {
-                // 수정
-                const index = newsList.findIndex(n => n.id === editingNews.id);
-                if (index !== -1) {
-                  newsList[index] = {
-                    ...newsList[index],
-                    title: form.title.value,
-                    youtube_link: form.youtube_link.value,
-                    description: form.description.value,
+                // 수정 - API 호출
+                try {
+                  await fetch(\`/api/news/\${editingNews.id}\`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newsData)
+                  });
+                  alert('참고뉴스가 수정되었습니다');
+                } catch (apiError) {
+                  // API 실패시 localStorage에 저장
+                  const newsList = JSON.parse(localStorage.getItem(NEWS_KEY) || '[]');
+                  const index = newsList.findIndex(n => n.id === editingNews.id);
+                  if (index !== -1) {
+                    newsList[index] = {
+                      ...newsList[index],
+                      ...newsData,
+                      updated_at: new Date().toISOString()
+                    };
+                    localStorage.setItem(NEWS_KEY, JSON.stringify(newsList));
+                  }
+                  alert('참고뉴스가 수정되었습니다 (로컬 저장)');
+                }
+              } else {
+                // 새로 등록 - API 호출
+                try {
+                  await fetch('/api/news', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newsData)
+                  });
+                  alert('참고뉴스가 등록되었습니다');
+                } catch (apiError) {
+                  // API 실패시 localStorage에 저장
+                  const newsList = JSON.parse(localStorage.getItem(NEWS_KEY) || '[]');
+                  const newNews = {
+                    id: Date.now(),
+                    ...newsData,
+                    status: 'active',
+                    created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                   };
+                  newsList.push(newNews);
+                  localStorage.setItem(NEWS_KEY, JSON.stringify(newsList));
+                  alert('참고뉴스가 등록되었습니다 (로컬 저장)');
                 }
-                alert('참고뉴스가 수정되었습니다');
-              } else {
-                // 새로 등록
-                const newNews = {
-                  id: Date.now(),
-                  title: form.title.value,
-                  youtube_link: form.youtube_link.value,
-                  description: form.description.value,
-                  status: 'active',
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                };
-                newsList.push(newNews);
-                alert('참고뉴스가 등록되었습니다');
               }
               
-              localStorage.setItem(NEWS_KEY, JSON.stringify(newsList));
               closeNewsForm();
               loadNews();
               loadNewsMain();
@@ -1680,6 +1734,14 @@ app.get('/', (c) => {
             if (!confirm('이 참고뉴스를 삭제하시겠습니까?')) return;
             
             try {
+              // API로 삭제 시도
+              try {
+                await fetch(\`/api/news/\${id}\`, { method: 'DELETE' });
+              } catch (apiError) {
+                // API 실패시 로컬에서만 삭제
+              }
+              
+              // localStorage에서도 삭제
               let newsList = JSON.parse(localStorage.getItem(NEWS_KEY) || '[]');
               newsList = newsList.filter(n => n.id !== id);
               localStorage.setItem(NEWS_KEY, JSON.stringify(newsList));
