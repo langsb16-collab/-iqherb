@@ -18,6 +18,7 @@
 - **프로젝트 상세 모달** (클릭 시 텍스트 정보 + YouTube 영상 표시)
 - 프로젝트 조회수 추적
 - 에러 처리 및 로딩 상태
+- **✨ localStorage와 API 동기화** (PC와 모바일 간 데이터 동기화)
 
 ### 기술 스택
 
@@ -116,9 +117,12 @@ npx wrangler pages deploy dist --project-name iqherb
 - **커스텀 도메인**: https://iqherb.org (Cloudflare Pages 대시보드에서 설정)
 
 ### 주의사항
-- localStorage 모드로 작동 (D1 데이터베이스 미연결)
-- 각 브라우저마다 독립적인 프로젝트 저장
-- 최대 100개 프로젝트 저장 가능
+- **데이터 동기화 방식**:
+  - 메인 페이지: API 우선, localStorage 백업 (PC/모바일 동기화)
+  - 관리자 페이지: localStorage와 API 동시 저장
+  - 캐시 삭제 시에도 API에서 데이터 복구 가능
+- D1 데이터베이스 연결 시 자동으로 API 사용
+- D1 미연결 시 localStorage만 사용 (브라우저별 독립 저장)
 
 ## 사용 가이드
 
@@ -156,7 +160,7 @@ npx wrangler pages deploy dist --project-name iqherb
 ### GitHub
 - ✅ **저장소**: https://github.com/langsb16-collab/-iqherb
 - ✅ **브랜치**: main
-- ✅ **최신 커밋**: Initial commit with full features
+- ✅ **최신 커밋**: Fix mobile sync - localStorage와 API 동기화 추가
 
 ### Cloudflare Pages
 - ✅ **배포 완료**: https://d26182d2.iqherb.pages.dev
