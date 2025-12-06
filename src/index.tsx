@@ -527,6 +527,9 @@ app.get('/', (c) => {
                         <input type="number" name="amount" required min="0" step="100" class="w-full border rounded px-4 py-2"></div>
                       </div>
                       
+                      <div><label class="block text-sm font-medium mb-2">유튜브 링크</label>
+                      <input type="url" name="youtube_link" placeholder="https://youtube.com/watch?v=..." class="w-full border rounded px-4 py-2"></div>
+                      
                       <div><label class="block text-sm font-medium mb-2">텍스트 정보</label>
                       <textarea name="text_info" rows="5" placeholder="프로젝트에 대한 상세 설명을 입력하세요..." class="w-full border rounded px-4 py-2"></textarea></div>
                       
@@ -706,10 +709,17 @@ app.get('/', (c) => {
                   \${youtubeId ? \`
                     <div class="mb-6">
                       <h3 class="text-lg font-bold mb-2"><i class="fab fa-youtube text-red-600 mr-2"></i>프로젝트 영상</h3>
-                      <div class="relative pb-[56.25%] h-0">
-                        <iframe src="https://www.youtube.com/embed/\${youtubeId}" 
-                          class="absolute top-0 left-0 w-full h-full rounded-lg"
-                          frameborder="0" allowfullscreen></iframe>
+                      <div class="mb-4">
+                        <img src="https://img.youtube.com/vi/\${youtubeId}/maxresdefault.jpg" 
+                          alt="YouTube 썸네일" 
+                          class="w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                          onclick="this.style.display='none'; this.nextElementSibling.style.display='block';"
+                          onerror="this.src='https://img.youtube.com/vi/\${youtubeId}/hqdefault.jpg'">
+                        <div class="relative pb-[56.25%] h-0" style="display:none;">
+                          <iframe src="https://www.youtube.com/embed/\${youtubeId}?autoplay=1" 
+                            class="absolute top-0 left-0 w-full h-full rounded-lg"
+                            frameborder="0" allowfullscreen allow="autoplay"></iframe>
+                        </div>
                       </div>
                     </div>
                   \` : ''}
