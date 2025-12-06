@@ -529,13 +529,8 @@ app.get('/', (c) => {
                         <input type="number" name="amount" required min="0" step="100" class="w-full border rounded px-4 py-2"></div>
                       </div>
                       
-                      <div><label class="block text-sm font-medium mb-2">유튜브 링크</label>
-                      <input type="url" name="youtube_link" id="youtubeLink" placeholder="https://youtube.com/watch?v=..." class="w-full border rounded px-4 py-2" oninput="updateYoutubeThumbnail()">
-                      <div id="youtubeThumbnailPreview" class="mt-3 hidden">
-                        <p class="text-sm text-gray-600 mb-2">썸네일 미리보기:</p>
-                        <img id="youtubeThumbnailImg" src="" class="w-full max-w-md h-48 object-cover rounded-lg border">
-                      </div>
-                      </div>
+                      <div><label class="block text-sm font-medium mb-2">텍스트 정보</label>
+                      <textarea name="text_info" rows="5" placeholder="프로젝트에 대한 상세 설명을 입력하세요..." class="w-full border rounded px-4 py-2"></textarea></div>
                       
                       <div class="flex gap-3 justify-end pt-4 border-t">
                         <button type="button" onclick="closeForm()" class="px-6 py-2 border rounded">취소</button>
@@ -582,11 +577,9 @@ app.get('/', (c) => {
             const formTitle = document.getElementById('formTitle');
             const form = document.getElementById('form');
             const modal = document.getElementById('modal');
-            const preview = document.getElementById('youtubeThumbnailPreview');
             
             if (formTitle) formTitle.textContent = '새 프로젝트';
             if (form) form.reset();
-            if (preview) preview.classList.add('hidden');
             if (modal) modal.classList.remove('hidden');
           }
 
@@ -600,24 +593,6 @@ app.get('/', (c) => {
             if (!url) return null;
             const match = url.match(/(?:youtube\\.com\\/watch\\?v=|youtu\\.be\\/)([^&\\s]+)/);
             return match ? match[1] : null;
-          }
-          
-          function updateYoutubeThumbnail() {
-            const input = document.getElementById('youtubeLink');
-            const preview = document.getElementById('youtubeThumbnailPreview');
-            const img = document.getElementById('youtubeThumbnailImg');
-            
-            if (!input || !preview || !img) return;
-            
-            const url = input.value;
-            const videoId = getYouTubeVideoId(url);
-            
-            if (videoId) {
-              img.src = \`https://img.youtube.com/vi/\${videoId}/maxresdefault.jpg\`;
-              preview.classList.remove('hidden');
-            } else {
-              preview.classList.add('hidden');
-            }
           }
 
           function save(e) {
@@ -657,9 +632,6 @@ app.get('/', (c) => {
               });
             }
             
-            // 유튜브 썸네일 미리보기 업데이트
-            updateYoutubeThumbnail();
-            
             if (modal) modal.classList.remove('hidden');
           }
 
@@ -688,12 +660,11 @@ app.get('/', (c) => {
 
               container.innerHTML = storedProjects.map(project => {
                 const youtubeId = getYouTubeVideoId(project.youtube_link);
-                const thumbnail = youtubeId ? \`https://img.youtube.com/vi/\${youtubeId}/hqdefault.jpg\` : 'https://via.placeholder.com/400x300?text=No+Image';
                 
                 return \`
                 <div class="bg-white rounded-lg shadow card-hover overflow-hidden cursor-pointer" onclick="showProjectDetail(\${project.id})">
                   <div class="thumbnail-container">
-                    <img src="\${thumbnail}" alt="\${project.title}" onerror="this.src='https://via.placeholder.com/400x300?text=No+Thumbnail'" loading="lazy">
+                    <!-- 썸네일 제거됨 -->
                   </div>
                   <div class="p-3">
                     <h3 class="text-sm font-bold text-gray-900 mb-2 line-clamp-1">\${project.title}</h3>
@@ -749,8 +720,8 @@ app.get('/', (c) => {
                   \` : ''}
                   
                   <div class="mb-4">
-                    <h3 class="text-lg font-bold mb-2">프로젝트 정보</h3>
-                    <p class="text-gray-600">\${project.description || ''}</p>
+                    <h3 class="text-lg font-bold mb-2">프로젝트 내용</h3>
+                    <p class="text-gray-600 whitespace-pre-wrap">\${project.text_info || project.description || '프로젝트 내용이 없습니다.'}</p>
                   </div>
                   
                   <div class="flex flex-wrap gap-2">
