@@ -928,9 +928,6 @@ app.get('/', (c) => {
                   \`).join('') : '<div class="p-12 text-center text-gray-500"><i class="fas fa-inbox text-6xl mb-4"></i><p>등록된 프로젝트가 없습니다</p></div>'}</div>
                 </div>
               </main>
-              </div>
-              
-            </header>
             
             <!-- Announcements Tab Content -->
             <div id="announcementsTab" style="display:none;">
