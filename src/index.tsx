@@ -257,6 +257,19 @@ let memoryAnnouncements: any[] = []
 // Get all announcements
 app.get('/api/announcements', async (c) => {
   try {
+    // Try D1 database first
+    if (c.env.DB) {
+      try {
+        const { results } = await c.env.DB.prepare(
+          'SELECT * FROM announcements WHERE status = ? ORDER BY created_at DESC'
+        ).bind('active').all()
+        return c.json({ success: true, data: results })
+      } catch (dbError) {
+        console.warn('D1 announcements error, falling back to memory:', dbError)
+      }
+    }
+    
+    // Fallback to memory storage
     const activeAnnouncements = memoryAnnouncements.filter(a => a.status === 'active' || !a.status)
     return c.json({ success: true, data: activeAnnouncements })
   } catch (error) {
@@ -269,6 +282,23 @@ app.get('/api/announcements', async (c) => {
 app.post('/api/announcements', async (c) => {
   try {
     const body = await c.req.json()
+    const newId = Date.now().toString()
+    
+    // Try D1 first
+    if (c.env.DB) {
+      try {
+        await c.env.DB.prepare(`
+          INSERT INTO announcements (id, title, content, image_url, status)
+          VALUES (?, ?, ?, ?, ?)
+        `).bind(newId, body.title, body.content, body.image_url || '', 'active').run()
+        
+        return c.json({ success: true, data: { id: newId, ...body, status: 'active' } })
+      } catch (dbError) {
+        console.warn('D1 insert error, falling back to memory:', dbError)
+      }
+    }
+    
+    // Fallback to memory
     const newAnnouncement = {
       id: Date.now(),
       title: body.title,
@@ -291,6 +321,22 @@ app.put('/api/announcements/:id', async (c) => {
   try {
     const id = c.req.param('id')
     const body = await c.req.json()
+    
+    // Try D1 first
+    if (c.env.DB) {
+      try {
+        await c.env.DB.prepare(`
+          UPDATE announcements 
+          SET title = ?, content = ?, image_url = ?, updated_at = datetime('now')
+          WHERE id = ?
+        `).bind(body.title, body.content, body.image_url || '', id).run()
+        return c.json({ success: true })
+      } catch (dbError) {
+        console.warn('D1 update error, falling back to memory:', dbError)
+      }
+    }
+    
+    // Fallback to memory
     const idx = memoryAnnouncements.findIndex(a => a.id == id)
     if (idx !== -1) {
       memoryAnnouncements[idx] = {
@@ -311,6 +357,18 @@ app.put('/api/announcements/:id', async (c) => {
 app.delete('/api/announcements/:id', async (c) => {
   try {
     const id = c.req.param('id')
+    
+    // Try D1 first
+    if (c.env.DB) {
+      try {
+        await c.env.DB.prepare('DELETE FROM announcements WHERE id = ?').bind(id).run()
+        return c.json({ success: true })
+      } catch (dbError) {
+        console.warn('D1 delete error, falling back to memory:', dbError)
+      }
+    }
+    
+    // Fallback to memory
     const initialLength = memoryAnnouncements.length
     memoryAnnouncements = memoryAnnouncements.filter(a => a.id != id)
     if (memoryAnnouncements.length < initialLength) {
@@ -332,6 +390,19 @@ let memoryNews: any[] = []
 // Get all news
 app.get('/api/news', async (c) => {
   try {
+    // Try D1 database first
+    if (c.env.DB) {
+      try {
+        const { results } = await c.env.DB.prepare(
+          'SELECT * FROM news WHERE status = ? ORDER BY created_at DESC'
+        ).bind('active').all()
+        return c.json({ success: true, data: results })
+      } catch (dbError) {
+        console.warn('D1 news error, falling back to memory:', dbError)
+      }
+    }
+    
+    // Fallback to memory storage
     const activeNews = memoryNews.filter(n => n.status === 'active' || !n.status)
     return c.json({ success: true, data: activeNews })
   } catch (error) {
@@ -344,10 +415,27 @@ app.get('/api/news', async (c) => {
 app.post('/api/news', async (c) => {
   try {
     const body = await c.req.json()
+    const newId = Date.now().toString()
+    
+    // Try D1 first
+    if (c.env.DB) {
+      try {
+        await c.env.DB.prepare(`
+          INSERT INTO news (id, title, youtube_url, description, status)
+          VALUES (?, ?, ?, ?, ?)
+        `).bind(newId, body.title, body.youtube_url || '', body.description || '', 'active').run()
+        
+        return c.json({ success: true, data: { id: newId, ...body, status: 'active' } })
+      } catch (dbError) {
+        console.warn('D1 insert news error, falling back to memory:', dbError)
+      }
+    }
+    
+    // Fallback to memory
     const newNews = {
       id: Date.now(),
       title: body.title,
-      youtube_link: body.youtube_link || '',
+      youtube_url: body.youtube_url || '',
       description: body.description || '',
       status: 'active',
       created_at: new Date().toISOString(),
@@ -366,6 +454,22 @@ app.put('/api/news/:id', async (c) => {
   try {
     const id = c.req.param('id')
     const body = await c.req.json()
+    
+    // Try D1 first
+    if (c.env.DB) {
+      try {
+        await c.env.DB.prepare(`
+          UPDATE news 
+          SET title = ?, youtube_url = ?, description = ?, updated_at = datetime('now')
+          WHERE id = ?
+        `).bind(body.title, body.youtube_url || '', body.description || '', id).run()
+        return c.json({ success: true })
+      } catch (dbError) {
+        console.warn('D1 update news error, falling back to memory:', dbError)
+      }
+    }
+    
+    // Fallback to memory
     const idx = memoryNews.findIndex(n => n.id == id)
     if (idx !== -1) {
       memoryNews[idx] = {
@@ -386,6 +490,18 @@ app.put('/api/news/:id', async (c) => {
 app.delete('/api/news/:id', async (c) => {
   try {
     const id = c.req.param('id')
+    
+    // Try D1 first
+    if (c.env.DB) {
+      try {
+        await c.env.DB.prepare('DELETE FROM news WHERE id = ?').bind(id).run()
+        return c.json({ success: true })
+      } catch (dbError) {
+        console.warn('D1 delete news error, falling back to memory:', dbError)
+      }
+    }
+    
+    // Fallback to memory
     const initialLength = memoryNews.length
     memoryNews = memoryNews.filter(n => n.id != id)
     if (memoryNews.length < initialLength) {
