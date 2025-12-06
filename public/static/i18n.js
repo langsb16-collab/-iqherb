@@ -1505,7 +1505,16 @@ function t(key) {
   return translations[lang][key] || translations['ko'][key] || key;
 }
 
-// Export for use in other scripts
+// Export for browser (global scope)
+if (typeof window !== 'undefined') {
+  window.translations = translations;
+  window.languageNames = languageNames;
+  window.getCurrentLanguage = getCurrentLanguage;
+  window.setCurrentLanguage = setCurrentLanguage;
+  window.t = t;
+}
+
+// Export for Node.js (module)
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { translations, languageNames, getCurrentLanguage, setCurrentLanguage, t };
 }
