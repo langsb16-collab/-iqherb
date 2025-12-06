@@ -146,6 +146,19 @@ npx wrangler pages deploy dist --project-name iqherb
 5. 기존 프로젝트 수정/삭제 가능
 
 ### 데이터 동기화 (PC ↔ 모바일)
+
+**자동 동기화 (권장):**
+1. **PC에서 프로젝트 등록**:
+   - 관리자 페이지(`/#/admin`)에서 프로젝트 등록
+   - localStorage에 자동 저장
+2. **PC에서 관리자 페이지 재접속**:
+   - 페이지 로드 시 자동으로 API에 업로드 🔄
+   - 콘솔에서 "🔄 Syncing X projects to API..." 확인 가능
+3. **모바일에서 확인**:
+   - 메인 페이지 접속 → API에서 자동 로드
+   - ✅ 즉시 프로젝트 표시됨!
+
+**수동 동기화 (백업용):**
 1. **PC에서 내보내기**:
    - 관리자 페이지(`/#/admin`)에서 "내보내기" 버튼 클릭
    - JSON 파일 다운로드 (`iqherb-projects-YYYY-MM-DD.json`)
@@ -177,13 +190,14 @@ npx wrangler pages deploy dist --project-name iqherb
 - ✅ **최신 커밋**: Add export/import feature for cross-device data sync
 
 ### Cloudflare Pages
-- ✅ **최신 배포**: https://4b749eea.iqherb.pages.dev (2025-12-06)
+- ✅ **최신 배포**: https://f3a35c01.iqherb.pages.dev (2025-12-06)
 - ✅ **프로젝트명**: iqherb
 - ✅ **커스텀 도메인**: https://iqherb.org (활성화 완료)
 - ✅ **주요 업데이트**: 
   - "대출희망" → "창업희망" 변경
   - 데이터 내보내기/가져오기 기능 추가
-  - **메모리 저장소 추가로 PC-모바일 완벽 동기화** ✨
+  - **자동 동기화: PC → API → 모바일 완벽 작동** ✨
+  - 관리자 페이지 접속 시 localStorage 자동 업로드
   - D1 없이도 API 작동 (메모리 기반)
   - YouTube 썸네일 로딩 개선 (안정성 향상)
 
