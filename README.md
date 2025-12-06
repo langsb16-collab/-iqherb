@@ -190,13 +190,14 @@ npx wrangler pages deploy dist --project-name iqherb
 - ✅ **최신 커밋**: Add export/import feature for cross-device data sync
 
 ### Cloudflare Pages
-- ✅ **최신 배포**: https://506cc033.iqherb.pages.dev (2025-12-06)
+- ✅ **최신 배포**: https://fff6f323.iqherb.pages.dev (2025-12-06)
 - ✅ **프로젝트명**: iqherb
 - ✅ **커스텀 도메인**: https://iqherb.org (활성화 완료)
 - ✅ **주요 업데이트**: 
   - "대출희망" → "창업희망" 변경
   - 데이터 내보내기/가져오기 기능 추가
-  - **localStorage 우선 로딩으로 즉시 표시** ✨
+  - **히어로 섹션 모바일 최적화 (50% 축소)** ✨
+  - localStorage 우선 로딩으로 즉시 표시
   - 중복 동기화 방지 (10초 쿨다운)
   - PC-모바일 간 데이터 공유 완벽 지원
   - YouTube 썸네일 로딩 개선 (안정성 향상)
