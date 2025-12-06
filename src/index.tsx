@@ -689,6 +689,60 @@ app.get('/', (c) => {
 
         <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
         <script>
+          // ============================================
+          // Multi-language Support (i18n)
+          // ============================================
+          
+          // Change language and update all UI elements
+          function changeLanguage(lang) {
+            if (!translations[lang]) {
+              console.error('Language not supported:', lang);
+              return;
+            }
+            
+            // Save language preference
+            localStorage.setItem('iqherb_language', lang);
+            
+            // Update all elements with data-i18n attribute
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+              const key = element.getAttribute('data-i18n');
+              if (translations[lang] && translations[lang][key]) {
+                // Handle HTML content (like heroTitle with <br>)
+                if (key === 'heroTitle') {
+                  element.innerHTML = translations[lang][key];
+                } else {
+                  element.textContent = translations[lang][key];
+                }
+              }
+            });
+            
+            // Update language selector
+            const selector = document.getElementById('languageSelector');
+            if (selector) {
+              selector.value = lang;
+            }
+            
+            console.log('Language changed to:', lang);
+          }
+          
+          // Initialize language on page load
+          function initializeLanguage() {
+            const savedLang = localStorage.getItem('iqherb_language') || 'ko';
+            const selector = document.getElementById('languageSelector');
+            
+            if (selector) {
+              selector.value = savedLang;
+            }
+            
+            // Apply translations
+            if (savedLang !== 'ko') {
+              changeLanguage(savedLang);
+            }
+          }
+          
+          // Run on page load
+          document.addEventListener('DOMContentLoaded', initializeLanguage);
+          
           const STORAGE_KEY = 'iqherb_projects';
           const ANNOUNCEMENTS_KEY = 'iqherb_announcements';
           const NEWS_KEY = 'iqherb_news';
