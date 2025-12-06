@@ -443,26 +443,53 @@ app.get('/', (c) => {
           let projects = initializeStorage();
           let editing = null;
 
-          // localStorage 데이터를 API로 동기화
+          // localStorage 데이터를 API로 동기화 (중복 방지)
+          let syncInProgress = false;
+          let lastSyncTime = 0;
+          
           async function syncToAPI() {
-            if (projects.length === 0) return;
+            if (projects.length === 0) {
+              console.log('ℹ️ No projects to sync');
+              return;
+            }
+            
+            // 중복 실행 방지 (10초 이내 재실행 차단)
+            const now = Date.now();
+            if (syncInProgress || (now - lastSyncTime < 10000)) {
+              console.log('⏭️ Sync skipped (already running or too soon)');
+              return;
+            }
+            
+            syncInProgress = true;
+            lastSyncTime = now;
             
             try {
               console.log('🔄 Syncing', projects.length, 'projects to API...');
               
+              let successCount = 0;
+              let skipCount = 0;
+              
               for (const project of projects) {
                 try {
-                  // API에 프로젝트 존재 여부 확인하지 않고 바로 생성
                   await axios.post('/api/projects', project);
-                  console.log('✅ Synced:', project.title);
+                  successCount++;
+                  console.log('✅', project.title);
                 } catch (error) {
-                  console.warn('⚠️ Sync failed for:', project.title, error);
+                  skipCount++;
+                  // 이미 존재하는 경우 무시
+                  if (error.response?.status === 409 || error.response?.status === 500) {
+                    console.log('⏭️ Skipped (already exists):', project.title);
+                  } else {
+                    console.warn('⚠️ Failed:', project.title);
+                  }
                 }
               }
               
-              console.log('✅ Sync complete!');
+              console.log(\`✅ Sync complete! Success: \${successCount}, Skipped: \${skipCount}\`);
             } catch (error) {
               console.error('❌ Sync error:', error);
+            } finally {
+              syncInProgress = false;
             }
           }
 
@@ -840,27 +867,29 @@ app.get('/', (c) => {
             try {
               // 1. localStorage에서 먼저 로드 (즉시 표시)
               const storedProjects = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+              console.log('📦 localStorage에서', storedProjects.length, '개 프로젝트 로드');
               
-              // 2. API에서 최신 데이터 가져오기 시도
-              let apiProjects = [];
-              try {
-                const response = await axios.get('/api/projects');
-                if (response.data && response.data.success && response.data.data) {
-                  apiProjects = response.data.data;
-                  
-                  // API 데이터가 있으면 localStorage와 병합
-                  if (apiProjects.length > 0) {
-                    // API 데이터를 localStorage에 저장 (동기화)
-                    safeSetItem(STORAGE_KEY, JSON.stringify(apiProjects));
-                    projects = apiProjects;
-                  }
-                }
-              } catch (apiError) {
-                console.warn('API 호출 실패, localStorage 사용:', apiError);
+              // 2. localStorage 데이터가 있으면 즉시 표시
+              if (storedProjects.length > 0) {
+                projects = storedProjects;
               }
               
-              // 3. 최종 데이터 결정 (API 우선, 없으면 localStorage)
-              const finalProjects = apiProjects.length > 0 ? apiProjects : storedProjects;
+              // 3. API에서 최신 데이터 가져오기 시도 (백그라운드)
+              try {
+                const response = await axios.get('/api/projects');
+                if (response.data && response.data.success && response.data.data && response.data.data.length > 0) {
+                  console.log('🌐 API에서', response.data.data.length, '개 프로젝트 로드');
+                  
+                  // API 데이터로 업데이트
+                  projects = response.data.data;
+                  safeSetItem(STORAGE_KEY, JSON.stringify(projects));
+                }
+              } catch (apiError) {
+                console.log('ℹ️ API 호출 실패, localStorage 데이터 사용');
+              }
+              
+              // 4. 최종 데이터 결정
+              const finalProjects = projects;
               
               loading.style.display = 'none';
               
