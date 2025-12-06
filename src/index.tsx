@@ -741,7 +741,10 @@ app.get('/', (c) => {
           }
           
           // Run on page load
-          document.addEventListener('DOMContentLoaded', initializeLanguage);
+          document.addEventListener('DOMContentLoaded', () => {
+            initializeLanguage();
+            renderMainPage();
+          });
           
           const STORAGE_KEY = 'iqherb_projects';
           const ANNOUNCEMENTS_KEY = 'iqherb_announcements';
