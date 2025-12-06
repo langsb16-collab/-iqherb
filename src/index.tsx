@@ -241,13 +241,13 @@ app.get('/', (c) => {
         <!-- Hero Section -->
         <section class="hero-gradient text-white py-3">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <h2 class="text-xs sm:text-sm md:text-base font-bold mb-1 leading-tight">
+                <h2 class="text-[11px] sm:text-sm md:text-base font-bold mb-1 leading-tight">
                     당신의 아이디어,<br>이곳에서 투자와 연결됩니다
                 </h2>
-                <p class="text-[9px] sm:text-[10px] md:text-xs mb-2 opacity-90">
+                <p class="text-[9px] sm:text-[10px] md:text-xs mb-2 opacity-90 whitespace-nowrap">
                     개발자·창업자·창작자를 위한 자금 조달 허브
                 </p>
-                <div class="flex justify-center gap-1.5 text-[9px] sm:text-[10px]">
+                <div class="flex flex-wrap justify-center gap-1.5 text-[9px] sm:text-[10px]">
                     <div class="bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full whitespace-nowrap">
                         <i class="fas fa-hand-holding-usd mr-0.5"></i>투자
                     </div>
