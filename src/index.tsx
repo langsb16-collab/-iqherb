@@ -210,7 +210,7 @@ app.get('/', (c) => {
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
         <style>
           body { font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
-          .hero-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+          .hero-gradient { background: linear-gradient(135deg, #a855f7 0%, #c026d3 100%); }
           .card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
           .card-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
           .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; }
@@ -239,23 +239,23 @@ app.get('/', (c) => {
         </header>
 
         <!-- Hero Section -->
-        <section class="hero-gradient text-white py-3">
+        <section class="hero-gradient text-white py-8 sm:py-12">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <h2 class="text-[11px] sm:text-sm md:text-base font-bold mb-1 leading-tight">
-                    당신의 아이디어,<br>이곳에서 투자와 연결됩니다
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 leading-tight">
+                    Code your vision,<br>build your future
                 </h2>
-                <p class="text-[9px] sm:text-[10px] md:text-xs mb-2 opacity-90 whitespace-nowrap">
-                    개발자·창업자·창작자를 위한 자금 조달 허브
+                <p class="text-base sm:text-lg md:text-xl mb-6 opacity-90">
+                    개발자, 전략적 투자자 조달 허브
                 </p>
-                <div class="flex flex-wrap justify-center gap-1.5 text-[9px] sm:text-[10px]">
-                    <div class="bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full whitespace-nowrap">
-                        <i class="fas fa-hand-holding-usd mr-0.5"></i>투자
+                <div class="flex flex-wrap justify-center gap-3 text-sm sm:text-base">
+                    <div class="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full whitespace-nowrap">
+                        <i class="fas fa-hand-holding-usd mr-1"></i>투자
                     </div>
-                    <div class="bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full whitespace-nowrap">
-                        <i class="fas fa-chart-line mr-0.5"></i>수익분배
+                    <div class="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full whitespace-nowrap">
+                        <i class="fas fa-chart-line mr-1"></i>수익분배
                     </div>
-                    <div class="bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full whitespace-nowrap">
-                        <i class="fas fa-coins mr-0.5"></i>대출희망
+                    <div class="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full whitespace-nowrap">
+                        <i class="fas fa-coins mr-1"></i>대출희망
                     </div>
                 </div>
             </div>
