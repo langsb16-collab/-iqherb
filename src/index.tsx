@@ -89,9 +89,9 @@ app.post('/api/projects', async (c) => {
       INSERT INTO projects (
         title, description, category, funding_type, amount, languages,
         app_link, website_link, youtube_link, other_links,
-        thumbnail, images, revenue, users, business_model, team_info,
+        thumbnail, revenue, users, business_model, team_info,
         contact_name, contact_email, contact_phone, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       body.title,
       body.description || '',
@@ -104,7 +104,6 @@ app.post('/api/projects', async (c) => {
       body.youtube_link || '',
       body.other_links || '',
       body.thumbnail || '',
-      body.images || '',
       body.revenue || '',
       body.users || '',
       body.business_model || '',
@@ -139,7 +138,7 @@ app.put('/api/projects/:id', async (c) => {
       UPDATE projects SET
         title = ?, description = ?, category = ?, funding_type = ?, 
         amount = ?, languages = ?, app_link = ?, website_link = ?, 
-        youtube_link = ?, other_links = ?, thumbnail = ?, images = ?,
+        youtube_link = ?, other_links = ?, thumbnail = ?,
         revenue = ?, users = ?, business_model = ?, team_info = ?,
         contact_name = ?, contact_email = ?, contact_phone = ?,
         status = ?, updated_at = CURRENT_TIMESTAMP
@@ -156,7 +155,6 @@ app.put('/api/projects/:id', async (c) => {
       body.youtube_link || '',
       body.other_links || '',
       body.thumbnail || '',
-      body.images || '',
       body.revenue || '',
       body.users || '',
       body.business_model || '',
@@ -532,10 +530,6 @@ app.get('/', (c) => {
                       <div><label class="block text-sm font-medium mb-2">유튜브 링크</label>
                       <input type="url" name="youtube_link" placeholder="https://youtube.com/watch?v=..." class="w-full border rounded px-4 py-2"></div>
                       
-                      <div><label class="block text-sm font-medium mb-2">프로젝트 이미지 (최대 3장)</label>
-                      <input type="file" id="imageUpload" accept="image/*" multiple class="w-full border rounded px-4 py-2" onchange="handleImageUpload(event)">
-                      <div id="imagePreviews" class="grid grid-cols-3 gap-2 mt-2"></div>
-                      <input type="hidden" name="images" id="imagesData"></div>
                       <div class="flex gap-3 justify-end pt-4 border-t">
                         <button type="button" onclick="closeForm()" class="px-6 py-2 border rounded">취소</button>
                         <button type="submit" class="px-6 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
@@ -580,14 +574,10 @@ app.get('/', (c) => {
             editing = null;
             const formTitle = document.getElementById('formTitle');
             const form = document.getElementById('form');
-            const imagePreviews = document.getElementById('imagePreviews');
-            const imagesData = document.getElementById('imagesData');
             const modal = document.getElementById('modal');
             
             if (formTitle) formTitle.textContent = '새 프로젝트';
             if (form) form.reset();
-            if (imagePreviews) imagePreviews.innerHTML = '';
-            if (imagesData) imagesData.value = '';
             if (modal) modal.classList.remove('hidden');
           }
 
@@ -595,130 +585,6 @@ app.get('/', (c) => {
             const modal = document.getElementById('modal');
             if (modal) modal.classList.add('hidden');
             editing = null;
-          }
-          
-          function compressImage(file, maxWidth = 400, quality = 0.2) {
-            return new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                  const canvas = document.createElement('canvas');
-                  let width = img.width;
-                  let height = img.height;
-                  
-                  // 400px로 리사이즈 (더욱 작게)
-                  if (width > maxWidth || height > maxWidth) {
-                    if (width > height) {
-                      height = (height * maxWidth) / width;
-                      width = maxWidth;
-                    } else {
-                      width = (width * maxWidth) / height;
-                      height = maxWidth;
-                    }
-                  }
-                  
-                  canvas.width = width;
-                  canvas.height = height;
-                  
-                  const ctx = canvas.getContext('2d');
-                  ctx.imageSmoothingEnabled = true;
-                  ctx.imageSmoothingQuality = 'high';
-                  ctx.drawImage(img, 0, 0, width, height);
-                  
-                  // JPEG 20% 품질로 극강 압축
-                  const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
-                  resolve(compressedBase64);
-                };
-                img.onerror = reject;
-                img.src = e.target.result;
-              };
-              reader.onerror = reject;
-              reader.readAsDataURL(file);
-            });
-          }
-
-          async function handleImageUpload(event) {
-            const files = event.target.files;
-            const previews = document.getElementById('imagePreviews');
-            const imagesDataInput = document.getElementById('imagesData');
-            
-            previews.innerHTML = '';
-            
-            if (files.length > 3) {
-              alert('최대 3장까지만 업로드 가능합니다');
-              event.target.value = '';
-              return;
-            }
-            
-            const imagesData = [];
-            const fileArray = Array.from(files);
-            
-            // 로딩 표시
-            const loadingDiv = document.createElement('div');
-            loadingDiv.className = 'text-center py-4';
-            loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin text-purple-600"></i> 이미지 압축 중...';
-            previews.appendChild(loadingDiv);
-            
-            for (let i = 0; i < fileArray.length; i++) {
-              const file = fileArray[i];
-              
-              if (file.size > 10 * 1024 * 1024) {
-                alert(\`\${file.name}: 이미지는 10MB 이하만 가능합니다\`);
-                continue;
-              }
-              
-              try {
-                // 극강 압축 (400px, 20% 품질)
-                let compressedBase64 = await compressImage(file, 400, 0.2);
-                let sizeInKB = (compressedBase64.length * 0.75) / 1024;
-                
-                // 목표: 100KB 이하로 압축 (더 작게!)
-                let attempt = 1;
-                while (sizeInKB > 100 && attempt <= 4) {
-                  const newMaxWidth = 400 - (attempt * 80);
-                  const newQuality = 0.2 - (attempt * 0.03);
-                  console.log(\`[\${file.name}] 추가 압축 \${attempt}회: \${newMaxWidth}px, \${(newQuality*100).toFixed(0)}%\`);
-                  compressedBase64 = await compressImage(file, newMaxWidth, Math.max(0.05, newQuality));
-                  sizeInKB = (compressedBase64.length * 0.75) / 1024;
-                  attempt++;
-                }
-                
-                console.log(\`[\${file.name}] 원본: \${(file.size/1024).toFixed(0)}KB → 최종: \${sizeInKB.toFixed(0)}KB (압축률: \${((1 - sizeInKB/(file.size/1024)) * 100).toFixed(1)}%)\`);
-                imagesData.push(compressedBase64);
-                
-              } catch (error) {
-                console.error(\`[\${file.name}] 이미지 처리 실패:\`, error);
-                alert(\`\${file.name}: 이미지 처리 중 오류가 발생했습니다\`);
-              }
-            }
-            
-            // 로딩 제거 및 미리보기 표시
-            previews.innerHTML = '';
-            imagesData.forEach((base64, i) => {
-              const div = document.createElement('div');
-              div.className = 'relative';
-              div.innerHTML = \`
-                <img src="\${base64}" class="w-full h-24 object-cover rounded">
-                <button type="button" onclick="removeImage(\${i})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 text-xs">×</button>
-              \`;
-              previews.appendChild(div);
-            });
-            
-            imagesDataInput.value = JSON.stringify(imagesData);
-            
-            // 전체 크기 확인
-            const totalSizeKB = (JSON.stringify(imagesData).length * 0.75) / 1024;
-            console.log(\`총 이미지 크기: \${totalSizeKB.toFixed(0)}KB\`);
-          }
-          
-          function removeImage(index) {
-            const imagesData = JSON.parse(document.getElementById('imagesData').value || '[]');
-            imagesData.splice(index, 1);
-            document.getElementById('imagesData').value = JSON.stringify(imagesData);
-            
-            const previews = document.getElementById('imagePreviews');
-            previews.children[index].remove();
           }
           
           function getYouTubeVideoId(url) {
@@ -731,170 +597,23 @@ app.get('/', (c) => {
             e.preventDefault();
             const data = Object.fromEntries(new FormData(e.target));
             
-            // ✅ STEP 0: 적극적 공간 확보 (최근 1개만 유지)  ⭐ 예외 처리 포함 버전
-            if (projects.length > 1) {
-              try {
-                console.log('🔥 적극적 공간 확보 - 최근 1개만 유지');
-                projects = projects.slice(-1);
-
-                // 기존 데이터 전부 지우고
-                localStorage.clear();
-
-                // 최근 1개만 다시 저장 (용량 매우 작아짐)
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-              } catch (err) {
-                console.error('STEP 0 저장소 초기화 중 오류:', err);
-
-                if (
-                  err.name === 'QuotaExceededError' ||
-                  err.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
-                  err.code === 22 ||       // Chrome/Edge
-                  err.code === 1014        // Firefox
-                ) {
-                  alert(
-                    '🚨 브라우저 저장 공간이 가득 차서\\n' +
-                    '기존 데이터 정리 중 오류가 발생했습니다.\\n\\n' +
-                    '브라우저 설정 → 쿠키 및 사이트 데이터에서\\n' +
-                    'iqherb.org 데이터를 삭제한 뒤 다시 시도해 주세요.'
-                  );
-                } else {
-                  alert('저장소 초기화 중 오류: ' + err.message);
-                }
-
-                // STEP 0 에서 이미 문제가 난 상태이므로 저장 로직 중단
-                return;
-              }
-            }
-            
-            // 이미지가 있으면 먼저 이미지 없이 저장 시도
-            if (data.images && data.images.length > 100) {
-              console.log('⚠️ 이미지 감지 - 이미지 없이 저장');
-              data.images = ''; // 이미지 제거
-            }
-            
-            // 임시 저장
-            const tempProjects = [...projects];
-            
             if (editing) {
-              const idx = tempProjects.findIndex(p => p.id === editing.id);
-              tempProjects[idx] = {...editing, ...data};
+              const idx = projects.findIndex(p => p.id === editing.id);
+              projects[idx] = {...editing, ...data};
             } else {
               data.id = Date.now();
               data.created_at = new Date().toISOString();
-              tempProjects.push(data);
+              projects.push(data);
             }
             
             try {
-              const jsonData = JSON.stringify(tempProjects);
-              const sizeInKB = (new Blob([jsonData]).size / 1024).toFixed(0);
-              const sizeInMB = (new Blob([jsonData]).size / 1024 / 1024).toFixed(2);
-              console.log(\`📦 전체 저장 데이터: \${sizeInKB}KB (\${sizeInMB}MB)\`);
-              
-              // localStorage 한계는 보통 5-10MB
-              const maxSizeKB = 3500; // 3.5MB로 더 안전하게 설정
-              
-              if (new Blob([jsonData]).size > maxSizeKB * 1024) {
-                const imagesSize = data.images ? (data.images.length * 0.75 / 1024).toFixed(0) : 0;
-                alert('❌ 저장 실패: 용량 초과 (' + sizeInKB + 'KB / ' + maxSizeKB + 'KB)\\n\\n' +
-                      '현재 프로젝트 이미지: ' + imagesSize + 'KB\\n\\n' +
-                      '해결 방법:\\n' +
-                      '1. 이미지 수를 1-2장으로 줄이기\\n' +
-                      '2. 기존 프로젝트 삭제 후 재시도\\n' +
-                      '3. 이미지 없이 저장 후 나중에 추가');
-                return;
-              }
-              
-              // 실제 저장 시도 (3단계 폴백)
-              try {
-                // 1단계: 그냥 저장
-                localStorage.setItem(STORAGE_KEY, jsonData);
-                projects = tempProjects;
-                console.log(\`✅ 저장 성공: \${sizeInKB}KB\`);
-                alert(editing ? '✅ 수정되었습니다' : '✅ 추가되었습니다');
-                closeForm();
-                renderAdminPanel();
-              } catch (saveError) {
-                console.error('❌ 1단계 실패:', saveError);
-                
-                // 2단계: 이미지 제거하고 저장
-                try {
-                  console.log('🔄 2단계: 이미지 제거 후 재시도');
-                  const dataNoImg = {...data, images: ''};
-                  if (editing) {
-                    const idx = projects.findIndex(p => p.id === editing.id);
-                    projects[idx] = {...editing, ...dataNoImg};
-                  } else {
-                    dataNoImg.id = Date.now();
-                    dataNoImg.created_at = new Date().toISOString();
-                    projects.push(dataNoImg);
-                  }
-                  localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-                  alert('✅ 이미지 없이 저장되었습니다!');
-                  closeForm();
-                  renderAdminPanel();
-                } catch (e2) {
-                  console.error('❌ 2단계 실패:', e2);
-                  
-                  // 3단계: 전체 초기화 후 저장
-                  try {
-                    console.log('🔥 3단계: 전체 초기화 후 재시도');
-                    localStorage.clear();
-                    const freshData = {...data, images: '', id: Date.now(), created_at: new Date().toISOString()};
-                    projects = [freshData];
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-                    alert('✅ 저장 완료! (기존 데이터 초기화됨)');
-                    closeForm();
-                    renderAdminPanel();
-                  } catch (e3) {
-                    console.error('❌ 3단계 실패:', e3);
-                    alert('❌ 저장 실패\\n\\n브라우저 설정 → 쿠키 및 사이트 데이터 → iqherb.org 삭제 후 재시도');
-                  }
-                }
-              }
+              safeSetItem(STORAGE_KEY, JSON.stringify(projects));
+              alert(editing ? '✅ 수정되었습니다' : '✅ 추가되었습니다');
+              closeForm();
+              renderAdminPanel();
             } catch (error) {
               console.error('❌ 저장 오류:', error);
-              if (error.name === 'QuotaExceededError') {
-                // 이미지 제거 옵션 제공
-                if (confirm('🚨 저장 공간 부족!\\n\\n이미지 없이 저장하시겠습니까?\\n\\n(이미지를 제거하고 나머지 정보만 저장됩니다)')) {
-                  try {
-                    // 이미지 제거 후 저장
-                    const dataWithoutImages = {...data, images: ''};
-                    if (editing) {
-                      const idx = projects.findIndex(p => p.id === editing.id);
-                      projects[idx] = {...editing, ...dataWithoutImages};
-                    } else {
-                      dataWithoutImages.id = Date.now();
-                      dataWithoutImages.created_at = new Date().toISOString();
-                      projects.push(dataWithoutImages);
-                    }
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-                    alert('✅ 이미지 없이 저장되었습니다!\\n\\n나중에 수정에서 이미지를 추가할 수 있습니다.');
-                    closeForm();
-                    renderAdminPanel();
-                    return;
-                  } catch (e2) {
-                    console.error('이미지 제거 후에도 실패:', e2);
-                  }
-                }
-                
-                // 자동 복구 시도
-                if (confirm('🚨 자동으로 공간을 확보하시겠습니까?\\n\\n- 기존 프로젝트 중 오래된 것들이 삭제됩니다\\n- 최근 2개만 유지됩니다')) {
-                  try {
-                    // 최근 2개만 유지 (더 많이 삭제)
-                    const recentProjects = projects.slice(-2);
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(recentProjects));
-                    projects = recentProjects;
-                    alert('✅ 공간 확보 완료!\\n\\n다시 저장을 시도해주세요.');
-                    renderAdminPanel();
-                  } catch (e) {
-                    alert('❌ 자동 복구 실패\\n\\n"전체 삭제" 버튼을 클릭하여 수동으로 초기화해주세요.');
-                  }
-                } else {
-                  alert('💡 해결 방법:\\n\\n1. "전체 삭제" 버튼 클릭\\n2. 또는 기존 프로젝트 일부 삭제\\n3. 이미지 수 줄이기 (1장 권장)');
-                }
-              } else {
-                alert('❌ 저장 오류: ' + error.message + '\\n\\n"전체 삭제" 후 다시 시도하세요.');
-              }
+              alert('❌ 저장 오류: ' + error.message);
             }
           }
 
@@ -909,26 +628,6 @@ app.get('/', (c) => {
               Object.keys(editing).forEach(k => {
                 if (form.elements[k]) form.elements[k].value = editing[k] || '';
               });
-            }
-            
-            // Load existing images
-            if (editing.images) {
-              const imagesData = JSON.parse(editing.images);
-              const previews = document.getElementById('imagePreviews');
-              if (previews) {
-                previews.innerHTML = '';
-                imagesData.forEach((img, index) => {
-                  const div = document.createElement('div');
-                  div.className = 'relative';
-                  div.innerHTML = \`
-                    <img src="\${img}" class="w-full h-24 object-cover rounded">
-                    <button type="button" onclick="removeImage(\${index})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 text-xs">×</button>
-                  \`;
-                  previews.appendChild(div);
-                });
-                const imagesDataInput = document.getElementById('imagesData');
-                if (imagesDataInput) imagesDataInput.value = editing.images;
-              }
             }
             
             if (modal) modal.classList.remove('hidden');
@@ -958,9 +657,8 @@ app.get('/', (c) => {
               }
 
               container.innerHTML = storedProjects.map(project => {
-                const images = project.images ? JSON.parse(project.images) : [];
-                const thumbnail = images[0] || 'https://via.placeholder.com/400x300?text=No+Image';
                 const youtubeId = getYouTubeVideoId(project.youtube_link);
+                const thumbnail = youtubeId ? \`https://img.youtube.com/vi/\${youtubeId}/maxresdefault.jpg\` : 'https://via.placeholder.com/400x300?text=No+Image';
                 
                 return \`
                 <div class="bg-white rounded-lg shadow card-hover overflow-hidden cursor-pointer" onclick="showProjectDetail(\${project.id})">
@@ -994,7 +692,6 @@ app.get('/', (c) => {
             const project = projects.find(p => p.id === id);
             if (!project) return;
             
-            const images = project.images ? JSON.parse(project.images) : [];
             const youtubeId = getYouTubeVideoId(project.youtube_link);
             
             const modal = document.createElement('div');
@@ -1010,23 +707,6 @@ app.get('/', (c) => {
                   </button>
                 </div>
                 <div class="p-6">
-                  \${images.length > 0 ? \`
-                    <div class="mb-6">
-                      <div class="w-full bg-gray-100 flex items-center justify-center rounded-lg mb-2" style="min-height: 400px;">
-                        <img src="\${images[0]}" class="max-w-full max-h-[400px] object-contain rounded-lg">
-                      </div>
-                      \${images.length > 1 ? \`
-                        <div class="grid grid-cols-3 gap-2">
-                          \${images.slice(1).map(img => \`
-                            <div class="w-full h-32 bg-gray-100 flex items-center justify-center rounded overflow-hidden">
-                              <img src="\${img}" class="max-w-full max-h-full object-contain">
-                            </div>
-                          \`).join('')}
-                        </div>
-                      \` : ''}
-                    </div>
-                  \` : ''}
-                  
                   \${youtubeId ? \`
                     <div class="mb-6">
                       <h3 class="text-lg font-bold mb-2"><i class="fab fa-youtube text-red-600 mr-2"></i>프로젝트 영상</h3>
