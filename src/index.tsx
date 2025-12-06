@@ -293,24 +293,24 @@ app.get('/', (c) => {
             </div>
         </header>
 
-        <!-- Hero Section -->
-        <section class="hero-gradient text-white py-8 sm:py-12">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 leading-tight">
+        <!-- Hero Section - Mobile Optimized (50% reduced) -->
+        <section class="hero-gradient text-white py-3 sm:py-6">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-base sm:text-xl md:text-2xl font-bold mb-1.5 leading-tight">
                     Code your vision,<br>build your future
                 </h2>
-                <p class="text-base sm:text-lg md:text-xl mb-6 opacity-90">
+                <p class="text-xs sm:text-sm md:text-base mb-3 opacity-90">
                     개발자, 전략적 투자자 조달 허브
                 </p>
-                <div class="flex flex-wrap justify-center gap-3 text-sm sm:text-base">
-                    <div class="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full whitespace-nowrap">
-                        <i class="fas fa-hand-holding-usd mr-1"></i>투자
+                <div class="flex flex-wrap justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                    <div class="bg-white/20 backdrop-blur-sm px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full whitespace-nowrap">
+                        <i class="fas fa-hand-holding-usd mr-0.5 text-xs"></i>투자
                     </div>
-                    <div class="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full whitespace-nowrap">
-                        <i class="fas fa-chart-line mr-1"></i>수익분배
+                    <div class="bg-white/20 backdrop-blur-sm px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full whitespace-nowrap">
+                        <i class="fas fa-chart-line mr-0.5 text-xs"></i>수익분배
                     </div>
-                    <div class="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full whitespace-nowrap">
-                        <i class="fas fa-coins mr-1"></i>창업희망
+                    <div class="bg-white/20 backdrop-blur-sm px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full whitespace-nowrap">
+                        <i class="fas fa-coins mr-0.5 text-xs"></i>창업희망
                     </div>
                 </div>
             </div>
