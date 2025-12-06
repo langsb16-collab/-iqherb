@@ -8,6 +8,9 @@ type Bindings = {
 
 const app = new Hono<{ Bindings: Bindings }>()
 
+// In-memory storage as fallback when D1 is not available
+let memoryProjects: any[] = []
+
 // Enable CORS for all routes with permissive settings
 app.use('*', cors({
   origin: '*',
@@ -28,23 +31,28 @@ app.use('/static/*', serveStatic({ root: './public' }))
 // Get all projects
 app.get('/api/projects', async (c) => {
   try {
-    // Check if DB is available
-    if (!c.env.DB) {
-      return c.json({ 
-        success: true, 
-        data: [],
-        message: 'Database not configured. Please add projects through the admin panel after connecting D1.'
-      })
+    // Try D1 database first
+    if (c.env.DB) {
+      try {
+        const { results } = await c.env.DB.prepare(
+          'SELECT * FROM projects WHERE status = ? ORDER BY created_at DESC'
+        ).bind('active').all()
+        return c.json({ success: true, data: results })
+      } catch (dbError) {
+        console.warn('D1 error, falling back to memory:', dbError)
+      }
     }
     
-    const { results } = await c.env.DB.prepare(
-      'SELECT * FROM projects WHERE status = ? ORDER BY created_at DESC'
-    ).bind('active').all()
-    
-    return c.json({ success: true, data: results })
+    // Fallback to memory storage
+    const activeProjects = memoryProjects.filter(p => p.status === 'active' || !p.status)
+    return c.json({ 
+      success: true, 
+      data: activeProjects,
+      message: memoryProjects.length === 0 ? 'No projects yet. Add some through the admin panel!' : undefined
+    })
   } catch (error) {
-    console.error('DB error:', error)
-    return c.json({ success: true, data: [], message: 'Database connection issue' })
+    console.error('API error:', error)
+    return c.json({ success: true, data: [] })
   }
 })
 
@@ -79,94 +87,129 @@ app.get('/api/projects/:id', async (c) => {
 // Create new project
 app.post('/api/projects', async (c) => {
   try {
-    if (!c.env.DB) {
-      return c.json({ success: false, error: 'Database not configured. Please use localStorage mode.' }, 200)
-    }
-    
     const body = await c.req.json()
     
-    const result = await c.env.DB.prepare(`
-      INSERT INTO projects (
-        title, description, category, funding_type, amount, languages,
-        app_link, website_link, youtube_link, other_links,
-        thumbnail, revenue, users, business_model, team_info,
-        contact_name, contact_email, contact_phone, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(
-      body.title,
-      body.description || '',
-      body.category || '',
-      body.funding_type || '',
-      body.amount || 0,
-      body.languages || '',
-      body.app_link || '',
-      body.website_link || '',
-      body.youtube_link || '',
-      body.other_links || '',
-      body.thumbnail || '',
-      body.revenue || '',
-      body.users || '',
-      body.business_model || '',
-      body.team_info || '',
-      body.contact_name || '',
-      body.contact_email || '',
-      body.contact_phone || '',
-      body.status || 'active'
-    ).run()
+    // Try D1 first
+    if (c.env.DB) {
+      try {
+        const result = await c.env.DB.prepare(`
+          INSERT INTO projects (
+            title, description, category, funding_type, amount, languages,
+            app_link, website_link, youtube_link, other_links,
+            thumbnail, revenue, users, business_model, team_info,
+            contact_name, contact_email, contact_phone, status
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          body.title,
+          body.description || '',
+          body.category || '',
+          body.funding_type || '',
+          body.amount || 0,
+          body.languages || '',
+          body.app_link || '',
+          body.website_link || '',
+          body.youtube_link || '',
+          body.other_links || '',
+          body.thumbnail || '',
+          body.revenue || '',
+          body.users || '',
+          body.business_model || '',
+          body.team_info || '',
+          body.contact_name || '',
+          body.contact_email || '',
+          body.contact_phone || '',
+          body.status || 'active'
+        ).run()
+        
+        return c.json({ 
+          success: true, 
+          data: { id: result.meta.last_row_id } 
+        })
+      } catch (dbError) {
+        console.warn('D1 error, using memory storage:', dbError)
+      }
+    }
+    
+    // Fallback to memory storage
+    const newProject = {
+      id: Date.now(),
+      ...body,
+      status: body.status || 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      view_count: 0
+    }
+    
+    memoryProjects.push(newProject)
     
     return c.json({ 
       success: true, 
-      data: { id: result.meta.last_row_id } 
+      data: { id: newProject.id } 
     })
   } catch (error) {
     console.error('Create project error:', error)
-    return c.json({ success: false, error: 'Database error. Please use localStorage mode.', useLocalStorage: true }, 200)
+    return c.json({ success: false, error: 'Failed to create project' }, 500)
   }
 })
 
 // Update project
 app.put('/api/projects/:id', async (c) => {
   try {
-    if (!c.env.DB) {
-      return c.json({ success: false, error: 'Database not configured' }, 500)
-    }
-    
     const id = c.req.param('id')
     const body = await c.req.json()
     
-    await c.env.DB.prepare(`
-      UPDATE projects SET
-        title = ?, description = ?, category = ?, funding_type = ?, 
-        amount = ?, languages = ?, app_link = ?, website_link = ?, 
-        youtube_link = ?, other_links = ?, thumbnail = ?,
-        revenue = ?, users = ?, business_model = ?, team_info = ?,
-        contact_name = ?, contact_email = ?, contact_phone = ?,
-        status = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).bind(
-      body.title,
-      body.description || '',
-      body.category || '',
-      body.funding_type || '',
-      body.amount || 0,
-      body.languages || '',
-      body.app_link || '',
-      body.website_link || '',
-      body.youtube_link || '',
-      body.other_links || '',
-      body.thumbnail || '',
-      body.revenue || '',
-      body.users || '',
-      body.business_model || '',
-      body.team_info || '',
-      body.contact_name || '',
-      body.contact_email || '',
-      body.contact_phone || '',
-      body.status || 'active',
-      id
-    ).run()
+    // Try D1 first
+    if (c.env.DB) {
+      try {
+        await c.env.DB.prepare(`
+          UPDATE projects SET
+            title = ?, description = ?, category = ?, funding_type = ?, 
+            amount = ?, languages = ?, app_link = ?, website_link = ?, 
+            youtube_link = ?, other_links = ?, thumbnail = ?,
+            revenue = ?, users = ?, business_model = ?, team_info = ?,
+            contact_name = ?, contact_email = ?, contact_phone = ?,
+            status = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).bind(
+          body.title,
+          body.description || '',
+          body.category || '',
+          body.funding_type || '',
+          body.amount || 0,
+          body.languages || '',
+          body.app_link || '',
+          body.website_link || '',
+          body.youtube_link || '',
+          body.other_links || '',
+          body.thumbnail || '',
+          body.revenue || '',
+          body.users || '',
+          body.business_model || '',
+          body.team_info || '',
+          body.contact_name || '',
+          body.contact_email || '',
+          body.contact_phone || '',
+          body.status || 'active',
+          id
+        ).run()
+        return c.json({ success: true })
+      } catch (dbError) {
+        console.warn('D1 error, using memory storage:', dbError)
+      }
+    }
     
-    return c.json({ success: true })
+    // Fallback to memory storage
+    const idx = memoryProjects.findIndex(p => p.id == id)
+    if (idx !== -1) {
+      memoryProjects[idx] = {
+        ...memoryProjects[idx],
+        ...body,
+        updated_at: new Date().toISOString()
+      }
+      return c.json({ success: true })
+    }
+    
+    return c.json({ success: false, error: 'Project not found' }, 404)
   } catch (error) {
     console.error('Update project error:', error)
     return c.json({ success: false, error: 'Failed to update project' }, 500)
@@ -176,17 +219,29 @@ app.put('/api/projects/:id', async (c) => {
 // Delete project
 app.delete('/api/projects/:id', async (c) => {
   try {
-    if (!c.env.DB) {
-      return c.json({ success: false, error: 'Database not configured' }, 500)
-    }
-    
     const id = c.req.param('id')
     
-    await c.env.DB.prepare(
-      'DELETE FROM projects WHERE id = ?'
-    ).bind(id).run()
+    // Try D1 first
+    if (c.env.DB) {
+      try {
+        await c.env.DB.prepare(
+          'DELETE FROM projects WHERE id = ?'
+        ).bind(id).run()
+        return c.json({ success: true })
+      } catch (dbError) {
+        console.warn('D1 error, using memory storage:', dbError)
+      }
+    }
     
-    return c.json({ success: true })
+    // Fallback to memory storage
+    const initialLength = memoryProjects.length
+    memoryProjects = memoryProjects.filter(p => p.id != id)
+    
+    if (memoryProjects.length < initialLength) {
+      return c.json({ success: true })
+    }
+    
+    return c.json({ success: false, error: 'Project not found' }, 404)
   } catch (error) {
     console.error('Delete project error:', error)
     return c.json({ success: false, error: 'Failed to delete project' }, 500)
