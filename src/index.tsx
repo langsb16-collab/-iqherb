@@ -648,8 +648,24 @@ app.get('/', (c) => {
           
           function getYouTubeVideoId(url) {
             if (!url) return null;
-            const match = url.match(/(?:youtube\\.com\\/watch\\?v=|youtu\\.be\\/)([^&\\s]+)/);
-            return match ? match[1] : null;
+            
+            // YouTube URL 패턴들
+            const patterns = [
+              /(?:youtube\\.com\\/watch\\?v=|youtu\\.be\\/)([^&\\s?]+)/,  // watch?v= or youtu.be/
+              /youtube\\.com\\/embed\\/([^&\\s?]+)/,                       // embed/
+              /youtube\\.com\\/v\\/([^&\\s?]+)/,                           // v/
+              /youtube\\.com\\/shorts\\/([^&\\s?]+)/                       // shorts/
+            ];
+            
+            for (const pattern of patterns) {
+              const match = url.match(pattern);
+              if (match && match[1]) {
+                // 11자리 YouTube ID만 반환
+                return match[1].substring(0, 11);
+              }
+            }
+            
+            return null;
           }
 
           async function save(e) {
@@ -824,11 +840,12 @@ app.get('/', (c) => {
                     <div class="mb-6">
                       <h3 class="text-lg font-bold mb-2"><i class="fab fa-youtube text-red-600 mr-2"></i>클릭하시면 설명 영상 보입니다</h3>
                       <div class="mb-4 max-w-[59%] mx-auto">
-                        <img src="https://img.youtube.com/vi/\${youtubeId}/maxresdefault.jpg" 
+                        <img src="https://img.youtube.com/vi/\${youtubeId}/hqdefault.jpg" 
                           alt="YouTube 썸네일" 
-                          class="w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                          class="w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity shadow-lg"
                           onclick="this.style.display='none'; this.nextElementSibling.style.display='block';"
-                          onerror="this.src='https://img.youtube.com/vi/\${youtubeId}/hqdefault.jpg'">
+                          onerror="this.onerror=null; this.src='https://img.youtube.com/vi/\${youtubeId}/default.jpg';"
+                          loading="lazy">
                         <div class="relative pb-[56.25%] h-0" style="display:none;">
                           <iframe src="https://www.youtube.com/embed/\${youtubeId}?autoplay=1" 
                             class="absolute top-0 left-0 w-full h-full rounded-lg"
