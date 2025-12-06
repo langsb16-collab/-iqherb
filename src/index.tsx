@@ -255,7 +255,7 @@ app.get('/', (c) => {
                         <i class="fas fa-chart-line mr-1"></i>수익분배
                     </div>
                     <div class="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full whitespace-nowrap">
-                        <i class="fas fa-coins mr-1"></i>대출희망
+                        <i class="fas fa-coins mr-1"></i>창업희망
                     </div>
                 </div>
             </div>
@@ -271,7 +271,7 @@ app.get('/', (c) => {
                             <option value="">전체</option>
                             <option value="투자">투자</option>
                             <option value="수익분배">수익분배</option>
-                            <option value="대출희망">대출희망</option>
+                            <option value="창업희망">창업희망</option>
                         </select>
                     </div>
                     <div class="flex items-center gap-1">
@@ -521,7 +521,7 @@ app.get('/', (c) => {
                         <div><label class="block text-sm font-medium mb-2">자금 방식 *</label>
                         <select name="funding_type" required class="w-full border rounded px-4 py-2">
                           <option value="">선택</option><option value="투자">투자</option>
-                          <option value="수익분배">수익분배</option><option value="대출희망">대출희망</option>
+                          <option value="수익분배">수익분배</option><option value="창업희망">창업희망</option>
                         </select></div>
                         <div><label class="block text-sm font-medium mb-2">희망 금액 (만원) *</label>
                         <input type="number" name="amount" required min="0" step="100" class="w-full border rounded px-4 py-2"></div>

@@ -133,7 +133,7 @@ function renderAdminPage() {
                   <option value="">선택하세요</option>
                   <option value="투자">투자</option>
                   <option value="수익분배">수익분배</option>
-                  <option value="대출희망">대출희망</option>
+                  <option value="창업희망">창업희망</option>
                 </select>
               </div>
               
