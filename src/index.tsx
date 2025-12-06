@@ -446,6 +446,58 @@ app.get('/', (c) => {
             }
           }
 
+          function exportData() {
+            try {
+              const data = JSON.stringify(projects, null, 2);
+              const blob = new Blob([data], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = \`iqherb-projects-\${new Date().toISOString().split('T')[0]}.json\`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              alert('✅ 데이터를 성공적으로 내보냈습니다!\\n\\n다운로드한 파일을 다른 기기에서 가져올 수 있습니다.');
+            } catch (e) {
+              console.error('Export error:', e);
+              alert('❌ 내보내기 실패: ' + e.message);
+            }
+          }
+
+          function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              try {
+                const imported = JSON.parse(e.target.result);
+                
+                if (!Array.isArray(imported)) {
+                  throw new Error('올바른 형식이 아닙니다.');
+                }
+
+                // 기존 데이터와 병합 (중복 제거)
+                const existingIds = new Set(projects.map(p => p.id));
+                const newProjects = imported.filter(p => !existingIds.has(p.id));
+                
+                projects = [...projects, ...newProjects];
+                
+                safeSetItem(STORAGE_KEY, JSON.stringify(projects));
+                alert(\`✅ 데이터를 성공적으로 가져왔습니다!\\n\\n새로 추가된 프로젝트: \${newProjects.length}개\\n기존 프로젝트: \${projects.length - newProjects.length}개\`);
+                renderAdminPanel();
+              } catch (e) {
+                console.error('Import error:', e);
+                alert('❌ 가져오기 실패: ' + e.message + '\\n\\n올바른 JSON 파일인지 확인해주세요.');
+              }
+            };
+            reader.readAsText(file);
+            
+            // 파일 선택 초기화
+            event.target.value = '';
+          }
+
           function renderAdminPanel() {
             const storageInfo = getStorageInfo();
             const storageColor = storageInfo.percentage > 80 ? 'text-red-600' : storageInfo.percentage > 50 ? 'text-orange-600' : 'text-green-600';
@@ -472,15 +524,19 @@ app.get('/', (c) => {
                 <div class="max-w-7xl mx-auto">
                   <div class="flex justify-between items-center mb-3">
                     <h1 class="text-2xl font-bold"><i class="fas fa-cog text-purple-600 mr-2"></i>프로젝트 관리</h1>
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 flex-wrap">
                       <button onclick="showForm()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
                         <i class="fas fa-plus mr-2"></i>새 프로젝트
                       </button>
+                      <button onclick="exportData()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" title="데이터 내보내기">
+                        <i class="fas fa-download mr-2"></i>내보내기
+                      </button>
+                      <button onclick="document.getElementById('importFile').click()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700" title="데이터 가져오기">
+                        <i class="fas fa-upload mr-2"></i>가져오기
+                      </button>
+                      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
                       <button onclick="clearStorage()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700" title="확인 후 삭제">
                         <i class="fas fa-trash mr-2"></i>전체 삭제
-                      </button>
-                      <button onclick="emergencyClear()" class="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 font-bold" title="즉시 초기화">
-                        <i class="fas fa-bolt mr-2"></i>긴급 초기화
                       </button>
                       <a href="/" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
                         <i class="fas fa-home mr-2"></i>메인
