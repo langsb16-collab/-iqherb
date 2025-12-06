@@ -708,7 +708,7 @@ app.get('/', (c) => {
                 <div class="p-6">
                   \${youtubeId ? \`
                     <div class="mb-6">
-                      <h3 class="text-lg font-bold mb-2"><i class="fab fa-youtube text-red-600 mr-2"></i>프로젝트 영상</h3>
+                      <h3 class="text-lg font-bold mb-2"><i class="fab fa-youtube text-red-600 mr-2"></i>클릭하시면 설명 영상 보입니다</h3>
                       <div class="mb-4 max-w-[59%] mx-auto">
                         <img src="https://img.youtube.com/vi/\${youtubeId}/maxresdefault.jpg" 
                           alt="YouTube 썸네일" 
