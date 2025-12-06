@@ -218,6 +218,8 @@ app.get('/', (c) => {
           .badge-revenue { background-color: #10B981; color: white; }
           .badge-loan { background-color: #F59E0B; color: white; }
           .amount-tag { background-color: #FCD34D; color: #92400E; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 1.125rem; font-weight: 700; }
+          .thumbnail-container { position: relative; width: 100%; height: 8rem; min-height: 8rem; background: #e5e7eb; }
+          .thumbnail-container img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
         </style>
     </head>
     <body class="bg-gray-50">
@@ -690,8 +692,8 @@ app.get('/', (c) => {
                 
                 return \`
                 <div class="bg-white rounded-lg shadow card-hover overflow-hidden cursor-pointer" onclick="showProjectDetail(\${project.id})">
-                  <div class="w-full h-32 bg-gray-200 flex items-center justify-center overflow-hidden">
-                    <img src="\${thumbnail}" alt="\${project.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/400x300?text=No+Thumbnail'">
+                  <div class="thumbnail-container">
+                    <img src="\${thumbnail}" alt="\${project.title}" onerror="this.src='https://via.placeholder.com/400x300?text=No+Thumbnail'" loading="lazy">
                   </div>
                   <div class="p-3">
                     <h3 class="text-sm font-bold text-gray-900 mb-2 line-clamp-1">\${project.title}</h3>
