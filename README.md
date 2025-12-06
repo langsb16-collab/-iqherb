@@ -10,12 +10,13 @@
 
 ✅ **완료된 기능**
 - 메인 페이지: 프로젝트 목록 카드 형식 디스플레이
-- 관리자 페이지 (`/admin.html`): 비밀번호 없이 프로젝트 CRUD 관리
-- 반응형 디자인 (모바일/태블릿/데스크톱)
+- 관리자 페이지 (`/#/admin`): localStorage 기반 프로젝트 CRUD 관리
+- 반응형 디자인 (모바일/태블릿/데스크톱) - 히어로 섹션 최적화
 - 자금 방식 필터링 (투자/수익분배/대출희망)
 - 프로젝트 검색 및 정렬 기능
-- 이미지 업로드 (Base64 인코딩)
-- 유튜브 링크 지원 (썸네일 + 빨간 재생 버튼 자동 표시)
+- ~~이미지 업로드 제거~~ (localStorage 용량 문제로 삭제)
+- **유튜브 썸네일 미리보기** (등록/수정 폼에서 실시간 미리보기)
+- **유튜브 링크 지원** (메인 페이지 카드에 썸네일 자동 표시)
 - 프로젝트 조회수 추적
 - 에러 처리 및 로딩 상태
 
@@ -31,7 +32,7 @@
 
 ### 웹 페이지
 - **메인 페이지**: https://iqherb.org - 프로젝트 목록
-- **관리자 페이지**: https://iqherb.org/admin.html - 프로젝트 관리 (비밀번호 불필요, URL만 알면 접근)
+- **관리자 페이지**: https://iqherb.org/#/admin - 프로젝트 관리 (localStorage 기반)
 
 ### API 엔드포인트
 - `GET /api/projects` - 모든 활성 프로젝트 목록 조회
@@ -98,29 +99,27 @@ curl http://localhost:3000/api/projects
 
 ## Cloudflare Pages 배포
 
-### 1. D1 데이터베이스 생성
+### ⚠️ 배포 전 필수 작업
+1. **Cloudflare API 키 설정**: Deploy 탭에서 API 토큰 생성 및 등록
+2. **빌드 완료**: `npm run build` 실행
+
+### 배포 명령어
 ```bash
-npx wrangler d1 create iqherb-production
+# 1. 빌드
+npm run build
+
+# 2. Cloudflare Pages 배포
+npx wrangler pages deploy dist --project-name iqherb
 ```
 
-생성된 `database_id`를 `wrangler.jsonc`에 추가
+### 배포 후 확인
+- **프로덕션 URL**: https://iqherb.pages.dev
+- **커스텀 도메인**: https://iqherb.org (Cloudflare Pages 대시보드에서 설정)
 
-### 2. 프로덕션 데이터베이스 마이그레이션
-```bash
-npm run db:migrate:prod
-```
-
-### 3. Cloudflare Pages 프로젝트 생성
-```bash
-npx wrangler pages project create iqherb \
-  --production-branch main \
-  --compatibility-date 2024-12-05
-```
-
-### 4. 배포
-```bash
-npm run deploy:prod
-```
+### 주의사항
+- localStorage 모드로 작동 (D1 데이터베이스 미연결)
+- 각 브라우저마다 독립적인 프로젝트 저장
+- 최대 100개 프로젝트 저장 가능
 
 ## 사용 가이드
 
@@ -131,21 +130,20 @@ npm run deploy:prod
 4. 정렬 옵션으로 프로젝트 정렬 (최신순/금액순/조회수순)
 
 ### 관리자 페이지
-1. `/admin.html`로 접속 (비밀번호 불필요)
+1. `/#/admin`로 접속
 2. "새 프로젝트" 버튼 클릭
 3. 프로젝트 정보 입력:
    - 기본 정보 (제목, 설명, 카테고리)
    - 자금 정보 (방식, 금액)
-   - 링크 정보 (앱/웹/유튜브)
-   - 이미지 업로드 (PC에서 업로드, Base64 자동 변환)
-   - 비즈니스 정보
-   - 연락처 정보
+   - **유튜브 링크** (입력 시 실시간 썸네일 미리보기)
 4. "저장" 버튼으로 프로젝트 등록
 5. 기존 프로젝트 수정/삭제 가능
 
 ### 특별 기능
-- **유튜브 링크**: YouTube URL 입력 시 썸네일과 빨간 재생 버튼 자동 표시
-- **이미지 업로드**: PC에서 이미지 선택 시 Base64로 자동 변환 및 저장
+- **유튜브 썸네일 자동 표시**: 
+  - 관리자 폼: YouTube URL 입력 시 실시간 썸네일 미리보기
+  - 메인 페이지: 카드에 YouTube 썸네일 자동 표시
+- **localStorage 기반 저장**: 브라우저 로컬 저장 (최대 100개 프로젝트)
 - **조회수 추적**: 프로젝트 클릭 시 자동으로 조회수 증가
 
 ## 배포 상태
