@@ -118,12 +118,14 @@ npx wrangler pages deploy dist --project-name iqherb
 - **커스텀 도메인**: https://iqherb.org (Cloudflare Pages 대시보드에서 설정)
 
 ### 주의사항
-- **데이터 동기화 방식**:
+- **데이터 동기화 방식** (메모리 저장소):
   - 메인 페이지: API 우선, localStorage 백업 (PC/모바일 동기화)
   - 관리자 페이지: localStorage와 API 동시 저장
+  - **PC에서 등록 → 즉시 API에 저장 → 모바일에서 자동 표시** ✅
   - 캐시 삭제 시에도 API에서 데이터 복구 가능
-- D1 데이터베이스 연결 시 자동으로 API 사용
-- D1 미연결 시 localStorage만 사용 (브라우저별 독립 저장)
+- ⚠️ **메모리 저장소 한계**: 서버 재시작 시 데이터 초기화됨 (Cloudflare Pages 배포 시마다 리셋)
+- 💾 **영구 저장**: D1 데이터베이스 연결 시 영구 저장 가능
+- 📦 **백업 권장**: 중요 데이터는 "내보내기" 기능으로 JSON 파일 백업
 
 ## 사용 가이드
 
@@ -175,13 +177,14 @@ npx wrangler pages deploy dist --project-name iqherb
 - ✅ **최신 커밋**: Add export/import feature for cross-device data sync
 
 ### Cloudflare Pages
-- ✅ **최신 배포**: https://3167c354.iqherb.pages.dev (2025-12-06)
+- ✅ **최신 배포**: https://4b749eea.iqherb.pages.dev (2025-12-06)
 - ✅ **프로젝트명**: iqherb
 - ✅ **커스텀 도메인**: https://iqherb.org (활성화 완료)
 - ✅ **주요 업데이트**: 
   - "대출희망" → "창업희망" 변경
   - 데이터 내보내기/가져오기 기능 추가
-  - PC-모바일 간 데이터 동기화 완벽 지원
+  - **메모리 저장소 추가로 PC-모바일 완벽 동기화** ✨
+  - D1 없이도 API 작동 (메모리 기반)
   - YouTube 썸네일 로딩 개선 (안정성 향상)
 
 ## 향후 개발 계획
