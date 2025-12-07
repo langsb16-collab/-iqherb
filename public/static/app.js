@@ -232,15 +232,15 @@ async function loadProjects() {
       const category = translateCategory(project.category || '기타');
       const fundingType = project.funding_type || 'investment';
       
-      // Determine badge color based on funding type
-      let badgeClass = 'badge-red';
+      // Determine badge icon and text based on funding type
+      let badgeIcon = '🔻';
       let badgeText = '투자';
       
       if (fundingType === 'investment' || fundingType.includes('투자') || fundingType.includes('Investment')) {
-        badgeClass = 'badge-red';
+        badgeIcon = '🔻';
         badgeText = t('type_investment');
       } else if (fundingType === 'donation' || fundingType.includes('수익') || fundingType.includes('Revenue')) {
-        badgeClass = 'badge-green';
+        badgeIcon = '🔻';
         badgeText = t('type_revenue');
       }
       
@@ -254,7 +254,7 @@ async function loadProjects() {
           <p class="project-description">${description || ''}</p>
         </div>
         <div class="project-card-footer">
-          <span class="badge ${badgeClass}">${badgeText}</span>
+          <span class="badge">${badgeIcon} ${badgeText}</span>
           <span class="amount-badge">$ ${(project.amount || 0).toLocaleString()}</span>
         </div>
       </div>

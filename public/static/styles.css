@@ -53,42 +53,41 @@
   align-items: center;
 }
 
-/* Badge Styles - Pill Shape */
+/* Badge Styles - Pill Shape with Icon */
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 6px 14px;
+  gap: 4px;
+  padding: 8px 15px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
+  color: white;
 }
 
 .badge-red {
-  background-color: #ef4444;
-  color: white;
+  background-color: #F0AD4E;
 }
 
 .badge-green {
-  background-color: #10b981;
-  color: white;
+  background-color: #F0AD4E;
 }
 
 .badge-pink {
-  background-color: #ec4899;
-  color: white;
+  background-color: #F0AD4E;
 }
 
-/* Amount Badge */
+/* Amount Badge - Yellow */
 .amount-badge {
   display: inline-flex;
   align-items: center;
-  padding: 6px 14px;
+  padding: 8px 15px;
   border-radius: 20px;
-  background-color: #fbbf24;
-  color: #92400e;
-  font-size: 12px;
-  font-weight: 700;
+  background-color: #F0AD4E;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
