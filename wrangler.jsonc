@@ -10,7 +10,7 @@
     {
       "binding": "DB",
       "database_name": "iqherb-production",
-      "database_id": "local-db-for-development"
+      "database_id": "914d50d4-0144-448f-b0a5-b525fbdb6e6e"
     }
   ]
 }
