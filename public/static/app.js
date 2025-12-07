@@ -256,7 +256,6 @@ async function loadProjects() {
         <div class="project-card-footer">
           <span class="badge ${badgeClass}">${badgeText}</span>
           <span class="amount-badge">$ ${(project.amount || 0).toLocaleString()}</span>
-          <span class="badge badge-pink">프로젝트완료</span>
         </div>
       </div>
     `;
